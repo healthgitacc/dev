@@ -153,7 +153,8 @@ export default function BookAppointmentPage() {
         endpoint = '/api/appointments';
       }
 
-      await apiClient.post(endpoint, appointmentData);
+      const response = await apiClient.post(endpoint, appointmentData);
+      console.log('[BookAppointment] Appointment created successfully:', response.data);
 
       setSuccess('✅ Appointment booked successfully! Redirecting...');
       setFormData({
@@ -174,9 +175,14 @@ export default function BookAppointmentPage() {
         router.push('/appointments');
       }, 2000);
     } catch (err: any) {
-      console.error('Booking error:', err);
+      console.error('[BookAppointment] Error during booking:', err);
+      console.error('[BookAppointment] Error details:', {
+        message: err.message,
+        code: err.code,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
       
-      // Handle different error types
       let errorMessage = 'Failed to book appointment';
       const errors: Record<string, string> = {};
       
