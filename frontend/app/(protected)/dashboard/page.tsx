@@ -38,7 +38,9 @@ export default function DashboardPage() {
         setError(null);
 
         // Fetch dashboard stats from backend
+        console.time('Dashboard API Call');
         const response = await apiClient.get('/api/admin/dashboard-stats');
+        console.timeEnd('Dashboard API Call');
 
         console.log('Dashboard stats response:', response.data);
         if (response.data) {
@@ -48,11 +50,30 @@ export default function DashboardPage() {
         }
       } catch (err: any) {
         console.error('Failed to load dashboard:', err);
-        const errorMessage = 
-          err.response?.data?.message || 
-          err.response?.data?.detail || 
-          err.message || 
-          'Failed to load dashboard data';
+        
+        let errorMessage = 'Failed to load dashboard data';
+        
+        // Better error messages
+        if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+          errorMessage = 'Request timeout (60s exceeded). Backend may be slow or unavailable.';
+        } else if (err.code === 'ECONNREFUSED') {
+          errorMessage = 'Cannot connect to backend server. Make sure it\'s running on port 8000.';
+        } else if (err.response?.status === 401) {
+          errorMessage = 'Unauthorized. Please log in again.';
+        } else if (err.response?.status === 403) {
+          errorMessage = 'You don\'t have permission to view the dashboard.';
+        } else if (err.response?.status === 404) {
+          errorMessage = 'Dashboard endpoint not found on server.';
+        } else if (err.response?.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = 
+            err.response?.data?.message || 
+            err.response?.data?.detail || 
+            err.message || 
+            errorMessage;
+        }
+        
         setError(errorMessage);
       } finally {
         setPageLoading(false);
@@ -90,12 +111,24 @@ export default function DashboardPage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-red-900 mb-2">Error Loading Dashboard</h2>
           <p className="text-red-700 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Try Again
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+            >
+              Go Home
+            </button>
+          </div>
+          <p className="text-sm text-red-600 mt-4 font-mono">
+            {error.includes('timeout') && 'Tip: The backend server may be busy. Try again in a moment.'}
+            {error.includes('ECONNREFUSED') && 'Tip: Make sure the backend server is running on port 8000.'}
+          </p>
         </div>
       </div>
     );

@@ -256,6 +256,7 @@ class NotificationService:
         phone_number: str,
         patient_name: str,
         doctor_name: str,
+        appointment_datetime: Optional[datetime] = None,
     ) -> dict:
         """
         Send appointment cancellation notification.
@@ -264,16 +265,31 @@ class NotificationService:
             phone_number: Patient phone number
             patient_name: Patient name
             doctor_name: Doctor name
+            appointment_datetime: Original appointment date and time
             
         Returns:
             Dictionary with notification status
         """
         try:
-            message_body = (
-                f"Hi {patient_name},\n\n"
-                f"Your appointment with Dr. {doctor_name} has been cancelled. "
-                f"Please contact us to reschedule."
-            )
+            if appointment_datetime:
+                appointment_time = appointment_datetime.strftime("%B %d, %Y at %I:%M %p UTC")
+                message_body = (
+                    f"❌ APPOINTMENT CANCELLED\n\n"
+                    f"Dear {patient_name},\n\n"
+                    f"Your appointment with Dr. {doctor_name} scheduled for {appointment_time} "
+                    f"has been cancelled.\n\n"
+                    f"To reschedule, please:\n"
+                    f"1. Call us at +1-800-HOSPITAL\n"
+                    f"2. Use our online booking system\n"
+                    f"3. Reply to this message\n\n"
+                    f"We apologize for any inconvenience."
+                )
+            else:
+                message_body = (
+                    f"Hi {patient_name},\n\n"
+                    f"Your appointment with Dr. {doctor_name} has been cancelled. "
+                    f"Please contact us to reschedule."
+                )
             
             if self.sms_enabled and not settings.DEBUG:
                 return self._send_twilio_sms(phone_number, message_body)

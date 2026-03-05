@@ -879,21 +879,35 @@ async def get_dashboard_stats(
     try:
         from sqlalchemy import func
         from app.models import User, Patient, Doctor, Appointment, AppointmentStatus, UserRole
+        from datetime import datetime, date
         
         # Admin users see system-wide statistics
         if current_user.role in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
-            # Count statistics
+            # Count statistics with optimized queries
             total_patients = db.query(func.count(Patient.id)).scalar() or 0
             total_doctors = db.query(func.count(Doctor.id)).scalar() or 0
             total_appointments = db.query(func.count(Appointment.id)).scalar() or 0
             
+            # Count completed appointments
             completed_appointments = db.query(func.count(Appointment.id)).filter(
                 Appointment.status == AppointmentStatus.COMPLETED
             ).scalar() or 0
             
-            today_appointments = db.query(func.count(Appointment.id)).filter(
-                func.date(Appointment.appointment_date) == func.date(func.now())
-            ).scalar() or 0
+            # Count today's appointments (SQLite compatible)
+            today = date.today()
+            today_appointments = 0
+            try:
+                # Try the SQL method first
+                today_appointments = db.query(func.count(Appointment.id)).filter(
+                    func.date(Appointment.appointment_date) == today
+                ).scalar() or 0
+            except:
+                # Fallback for SQLite if date extraction fails
+                all_today = db.query(Appointment).all()
+                today_appointments = sum(
+                    1 for apt in all_today 
+                    if apt.appointment_date.date() == today
+                )
             
             return {
                 "total_patients": total_patients,

@@ -236,7 +236,7 @@ async def update_doctor_profile(
         if not doctor:
             raise NotFoundError("Doctor", doctor_id)
         
-        if current_user.role != UserRole.ADMIN and current_user.id != doctor.user_id:
+        if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN] and current_user.id != doctor.user_id:
             raise AuthorizationError("Can only update your own profile")
         
         updated_doctor = doctor_service.update_doctor_profile(

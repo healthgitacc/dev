@@ -12,7 +12,7 @@ console.log('[API Client] Initializing with API_URL:', API_URL);
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
     baseURL: API_URL,
-    timeout: 30000,
+    timeout: 60000, // Increased from 30s to 60s for slower queries
     headers: {
       'Content-Type': 'application/json',
     },

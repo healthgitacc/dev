@@ -41,6 +41,14 @@ export default function DoctorsPage() {
         setFilteredDoctors(doctorsList);
         setError('');
       } catch (err) {
+        // If fetching fails, try to get specializations separately
+        try {
+          const specsResponse = await apiClient.get('/api/doctors/list/specializations');
+          const specs = specsResponse.data.specializations || [];
+          setSpecializations(specs.sort());
+        } catch (specErr) {
+          console.error('Error fetching specializations:', specErr);
+        }
         setError('Failed to load doctors');
         console.error(err);
       } finally {
@@ -135,7 +143,7 @@ export default function DoctorsPage() {
               <div className="text-xs text-gray-600 space-y-1 mb-4">
                 <p>📧 {doctor.email}</p>
                 <p>📱 {doctor.phone}</p>
-                <p>⏱️ {doctor.experience_years} years experience</p>
+                <p>⏱️ {doctor.experience_years || 0} years experience</p>
                 {doctor.license_number && (
                   <p>📜 License: {doctor.license_number}</p>
                 )}

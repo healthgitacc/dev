@@ -147,7 +147,7 @@ async def search_patients(
         from app.core import AuthorizationError
         
         # Check authorization
-        if current_user.role not in [UserRole.DOCTOR, UserRole.ADMIN]:
+        if current_user.role not in [UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             raise AuthorizationError("Doctor or admin access required")
         
         patient_service = PatientService(db)
@@ -195,7 +195,7 @@ async def get_patients_by_blood_group(
         from app.core import AuthorizationError
         
         # Check authorization
-        if current_user.role not in [UserRole.DOCTOR, UserRole.ADMIN]:
+        if current_user.role not in [UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             raise AuthorizationError("Doctor or admin access required")
         
         patient_service = PatientService(db)
@@ -243,7 +243,7 @@ async def get_patients_by_gender(
         from app.core import AuthorizationError
         
         # Check authorization
-        if current_user.role not in [UserRole.DOCTOR, UserRole.ADMIN]:
+        if current_user.role not in [UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             raise AuthorizationError("Doctor or admin access required")
         
         patient_service = PatientService(db)
@@ -301,7 +301,7 @@ async def update_patient_profile(
         if not patient:
             raise NotFoundError("Patient", patient_id)
         
-        if current_user.role != UserRole.ADMIN and current_user.id != patient.user_id:
+        if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN] and current_user.id != patient.user_id:
             raise AuthorizationError("Can only update your own profile")
         
         updated_patient = patient_service.update_patient_profile(

@@ -202,7 +202,7 @@ async def get_appointment(
             raise NotFoundError("Appointment", appointment_id)
         
         # Check authorization
-        if current_user.role == UserRole.ADMIN:
+        if current_user.role in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             pass  # Admins can view any appointment
         elif current_user.role == UserRole.DOCTOR:
             if appointment.doctor.user_id != current_user.id:
@@ -243,7 +243,7 @@ async def update_appointment_status(
         from app.core import AuthorizationError, NotFoundError
         
         # Only doctors and admins can update status
-        if current_user.role not in [UserRole.DOCTOR, UserRole.ADMIN]:
+        if current_user.role not in [UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             raise AuthorizationError("Doctor or admin access required")
         
         # Parse status
@@ -306,7 +306,7 @@ async def reschedule_appointment(
             raise NotFoundError("Appointment", appointment_id)
         
         # Check authorization
-        if current_user.role == UserRole.ADMIN:
+        if current_user.role in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             pass  # Admins can reschedule any
         elif current_user.role == UserRole.PATIENT:
             if appointment.patient.user_id != current_user.id:
@@ -335,7 +335,7 @@ async def cancel_appointment(
     db: Session = Depends(get_db),
 ) -> dict:
     """
-    Cancel an appointment.
+    Cancel an appointment and send SMS notification to patient.
     
     Args:
         appointment_id: Appointment ID
@@ -343,11 +343,12 @@ async def cancel_appointment(
         db: Database session
         
     Returns:
-        Cancelled appointment
+        Cancelled appointment with notification status
     """
     try:
         from app.models import UserRole
         from app.core import AuthorizationError, NotFoundError
+        from app.services import NotificationService
         
         appointment_service = AppointmentService(db)
         appointment = appointment_service.get(appointment_id)
@@ -356,7 +357,7 @@ async def cancel_appointment(
             raise NotFoundError("Appointment", appointment_id)
         
         # Check authorization
-        if current_user.role == UserRole.ADMIN:
+        if current_user.role in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             pass
         elif current_user.role == UserRole.PATIENT:
             if appointment.patient.user_id != current_user.id:
@@ -370,8 +371,75 @@ async def cancel_appointment(
             AppointmentStatus.CANCELLED
         )
         
+        # Send SMS notification to patient
+        notification_service = NotificationService()
+        sms_result = notification_service.send_cancellation_notification(
+            phone_number=appointment.patient.user.phone or "",
+            patient_name=appointment.patient.user.name,
+            doctor_name=appointment.doctor.user.name,
+            appointment_datetime=appointment.appointment_date,
+        )
+        
+        logger.info(f"Appointment {appointment_id} cancelled. SMS notification: {sms_result.get('success')}")
+        
         return {
             "message": "Appointment cancelled successfully",
+            "appointment": appointment_service.get_appointment_with_details(appointment_id),
+            "notification": {
+                "sms_sent": sms_result.get("success"),
+                "phone": sms_result.get("phone"),
+            }
+        }
+    except AppException as exc:
+        raise app_exception_to_http(exc)
+
+
+@router.post(
+    "/{appointment_id}/complete",
+    response_model=dict,
+)
+async def complete_appointment(
+    appointment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Mark an appointment as completed (doctor or admin only).
+    
+    Args:
+        appointment_id: Appointment ID
+        current_user: Current authenticated user (must be doctor or admin)
+        db: Database session
+        
+    Returns:
+        Completed appointment
+    """
+    try:
+        from app.models import UserRole
+        from app.core import AuthorizationError, NotFoundError
+        
+        # Only doctors and admins can complete appointments
+        if current_user.role not in [UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
+            raise AuthorizationError("Doctor or admin access required")
+        
+        appointment_service = AppointmentService(db)
+        appointment = appointment_service.get(appointment_id)
+        
+        if not appointment:
+            raise NotFoundError("Appointment", appointment_id)
+        
+        # Doctors can only complete their own appointments
+        if current_user.role == UserRole.DOCTOR:
+            if appointment.doctor.user_id != current_user.id:
+                raise AuthorizationError("Can only complete your own appointments")
+        
+        updated = appointment_service.update_appointment_status(
+            appointment_id,
+            AppointmentStatus.COMPLETED
+        )
+        
+        return {
+            "message": "Appointment marked as completed",
             "appointment": appointment_service.get_appointment_with_details(appointment_id)
         }
     except AppException as exc:

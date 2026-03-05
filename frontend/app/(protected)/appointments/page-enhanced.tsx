@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import apiClient from '@/lib/api';
 import Link from 'next/link';
-import { useAuthStore } from '@/lib/auth-store';
 
 interface Appointment {
   id: number;
@@ -94,7 +93,6 @@ function ConfirmationModal({
 
 // Appointment Details Modal
 function AppointmentDetailModal({ appointment, isOpen, onClose, onActionSuccess }: DetailModalProps) {
-  const { user } = useAuthStore();
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     action: 'cancel' | 'complete' | null;
@@ -122,18 +120,17 @@ function AppointmentDetailModal({ appointment, isOpen, onClose, onActionSuccess 
   const handleCancelAppointment = async () => {
     setActionLoading(true);
     try {
-      await apiClient.post(`/api/appointments/${appointment.id}/cancel`);
+      const response = await apiClient.post(`/api/appointments/${appointment.id}/cancel`);
       setActionMessage('Appointment cancelled successfully and SMS sent to patient!');
       setTimeout(() => {
         setConfirmModal({ isOpen: false, action: null });
         setActionMessage('');
         onActionSuccess();
         onClose();
-      }, 1500);
+      }, 2000);
     } catch (error: any) {
-      console.error('Cancel error:', error.response?.data);
       setActionMessage(
-        error.response?.data?.detail || error.message || 'Failed to cancel appointment'
+        error.response?.data?.detail || 'Failed to cancel appointment'
       );
     } finally {
       setActionLoading(false);
@@ -143,18 +140,17 @@ function AppointmentDetailModal({ appointment, isOpen, onClose, onActionSuccess 
   const handleCompleteAppointment = async () => {
     setActionLoading(true);
     try {
-      await apiClient.post(`/api/appointments/${appointment.id}/complete`);
+      const response = await apiClient.post(`/api/appointments/${appointment.id}/complete`);
       setActionMessage('Appointment marked as completed!');
       setTimeout(() => {
         setConfirmModal({ isOpen: false, action: null });
         setActionMessage('');
         onActionSuccess();
         onClose();
-      }, 1500);
+      }, 2000);
     } catch (error: any) {
-      console.error('Complete error:', error.response?.data);
       setActionMessage(
-        error.response?.data?.detail || error.message || 'Failed to complete appointment'
+        error.response?.data?.detail || 'Failed to complete appointment'
       );
     } finally {
       setActionLoading(false);
@@ -268,16 +264,13 @@ function AppointmentDetailModal({ appointment, isOpen, onClose, onActionSuccess 
             <div className="flex gap-2 justify-end pt-4 flex-wrap">
               {appointment.status === 'scheduled' && (
                 <>
-                  {(user?.role === 'doctor' || user?.role === 'admin' || user?.role === 'hospital_admin' || user?.role === 'super_admin') && (
-                    <button
-                      onClick={() => setConfirmModal({ isOpen: true, action: 'complete' })}
-                      disabled={actionLoading}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
-                      title="Only doctors and admins can mark appointments as complete"
-                    >
-                      ✓ Mark Complete
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setConfirmModal({ isOpen: true, action: 'complete' })}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
+                  >
+                    ✓ Mark Complete
+                  </button>
                   <button
                     onClick={() => setConfirmModal({ isOpen: true, action: 'cancel' })}
                     disabled={actionLoading}
@@ -320,7 +313,6 @@ function AppointmentDetailModal({ appointment, isOpen, onClose, onActionSuccess 
 }
 
 export default function AppointmentsPage() {
-  const { user } = useAuthStore();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [statusFilter, setStatusFilter] = useState('All');

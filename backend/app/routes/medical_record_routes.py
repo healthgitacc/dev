@@ -139,7 +139,7 @@ async def create_medical_record(
         from app.core import AuthorizationError
         
         # Only doctors and admins can create records
-        if current_user.role not in [UserRole.DOCTOR, UserRole.ADMIN]:
+        if current_user.role not in [UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             raise AuthorizationError("Doctor or admin access required")
         
         # Get doctor ID if doctor
@@ -352,7 +352,7 @@ async def update_medical_record(
         from app.core import AuthorizationError, NotFoundError
         
         # Only doctors and admins can update
-        if current_user.role not in [UserRole.DOCTOR, UserRole.ADMIN]:
+        if current_user.role not in [UserRole.DOCTOR, UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN]:
             raise AuthorizationError("Doctor or admin access required")
         
         medical_record_service = MedicalRecordService(db)
