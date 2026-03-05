@@ -27,6 +27,7 @@ CREATE INDEX idx_users_created_at ON users(created_at);
 CREATE TABLE doctors (
     id SERIAL PRIMARY KEY,
     user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
     specialization VARCHAR(255) NOT NULL,
     experience_years INTEGER NOT NULL,
     license_number VARCHAR(100),
@@ -35,6 +36,7 @@ CREATE TABLE doctors (
 );
 
 CREATE INDEX idx_doctors_user_id ON doctors(user_id);
+CREATE INDEX idx_doctors_name ON doctors(name);
 CREATE INDEX idx_doctors_specialization ON doctors(specialization);
 CREATE INDEX idx_doctors_license_number ON doctors(license_number);
 

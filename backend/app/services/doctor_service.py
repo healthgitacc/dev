@@ -58,7 +58,7 @@ class DoctorService(BaseService[Doctor]):
         return {
             "id": doctor.id,
             "user_id": doctor.user_id,
-            "name": doctor.user.name,
+            "name": doctor.name,
             "email": doctor.user.email,
             "phone": doctor.user.phone,
             "specialization": doctor.specialization,
@@ -119,6 +119,7 @@ class DoctorService(BaseService[Doctor]):
     def update_doctor_profile(
         self,
         doctor_id: int,
+        name: Optional[str] = None,
         specialization: Optional[str] = None,
         experience_years: Optional[int] = None,
         license_number: Optional[str] = None,
@@ -128,6 +129,7 @@ class DoctorService(BaseService[Doctor]):
         
         Args:
             doctor_id: Doctor ID
+            name: Doctor's professional name
             specialization: Medical specialization
             experience_years: Years of experience
             license_number: Medical license number
@@ -148,6 +150,8 @@ class DoctorService(BaseService[Doctor]):
                 raise ValidationError("Experience years cannot be negative", field="experience_years")
         
         update_data = {}
+        if name is not None:
+            update_data["name"] = name
         if specialization is not None:
             update_data["specialization"] = specialization
         if experience_years is not None:
@@ -193,7 +197,7 @@ class DoctorService(BaseService[Doctor]):
         """
         search = f"%{query}%"
         q = self.db.query(Doctor).join(User).filter(
-            (User.name.ilike(search)) |
+            (Doctor.name.ilike(search)) |
             (Doctor.specialization.ilike(search)) |
             (User.email.ilike(search))
         )

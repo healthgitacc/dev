@@ -40,6 +40,7 @@ class UserResponse(UserBase):
 class DoctorProfile(BaseModel):
     """Doctor profile information."""
     id: int = Field(..., description="Doctor ID")
+    name: str = Field(..., description="Doctor's professional name")
     specialization: str = Field(..., description="Medical specialization")
     experience_years: int = Field(..., description="Years of experience")
     license_number: Optional[str] = Field(None, description="Medical license number")

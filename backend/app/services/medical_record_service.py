@@ -119,7 +119,7 @@ class MedicalRecordService(BaseService[MedicalRecord]):
             "patient_id": record.patient_id,
             "patient_name": record.patient.user.name,
             "doctor_id": record.doctor_id,
-            "doctor_name": record.doctor.user.name if record.doctor else None,
+            "doctor_name": record.doctor.name if record.doctor else None,
             "doctor_specialization": record.doctor.specialization if record.doctor else None,
             "disease_name": record.disease_name,
             "diagnosis": record.diagnosis,

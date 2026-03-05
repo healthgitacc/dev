@@ -203,6 +203,7 @@ async def get_specializations(
 )
 async def update_doctor_profile(
     doctor_id: int,
+    name: Optional[str] = Query(None, min_length=2),
     specialization: Optional[str] = Query(None, min_length=2),
     experience_years: Optional[int] = Query(None, ge=0),
     license_number: Optional[str] = Query(None),
@@ -216,6 +217,7 @@ async def update_doctor_profile(
     
     Args:
         doctor_id: Doctor ID to update
+        name: Doctor's professional name
         specialization: Medical specialization
         experience_years: Years of experience
         license_number: Medical license number
@@ -241,6 +243,7 @@ async def update_doctor_profile(
         
         updated_doctor = doctor_service.update_doctor_profile(
             doctor_id,
+            name=name,
             specialization=specialization,
             experience_years=experience_years,
             license_number=license_number,

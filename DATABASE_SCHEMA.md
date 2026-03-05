@@ -55,6 +55,7 @@ users (
 doctors (
   id: INTEGER (primary key)
   user_id: INTEGER (foreign key → users.id, unique)
+  name: VARCHAR(255) - Doctor's professional name
   specialization: VARCHAR(255) - Medical specialty
   experience_years: INTEGER - Years of practice
   license_number: VARCHAR(100) - Medical license identifier
@@ -65,7 +66,8 @@ doctors (
 
 **Key Columns:**
 - `id` - Primary key
-- `user_id` - Foreign key to users table (one-to-one, cascade delete)
+- `user_id` - Foreign key to users table (one-to-one, cascade delete) - links to authentication info, NOT the doctor's name
+- `name` - Doctor's professional name (separate from user authentication info)
 - `specialization` - Examples: Cardiology, Neurology, Pediatrics, General Practice, etc.
 - `experience_years` - Integer representing years of medical practice
 - `license_number` - Unique identifier for medical license

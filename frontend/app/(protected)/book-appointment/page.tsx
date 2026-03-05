@@ -46,7 +46,7 @@ export default function BookAppointmentPage() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const doctorResponse = await apiClient.get('/api/doctors');
+        const doctorResponse = await apiClient.get('/api/doctors?limit=100');
         setDoctors(doctorResponse.data.items || []);
         setLoading(false);
       } catch (err) {
@@ -238,6 +238,18 @@ export default function BookAppointmentPage() {
         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-800 rounded">
           <p className="font-semibold">Error</p>
           <p className="text-sm mt-1">{error}</p>
+          {Object.keys(fieldErrors).length > 0 && (
+            <div className="mt-3 ml-2 text-sm">
+              <p className="font-medium mb-2">Validation errors:</p>
+              <ul className="list-disc list-inside space-y-1">
+                {Object.entries(fieldErrors).map(([field, message]) => (
+                  <li key={field}>
+                    <strong>{field.replace(/_/g, ' ')}:</strong> {message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -444,8 +456,13 @@ export default function BookAppointmentPage() {
               placeholder="Describe patient symptoms"
               rows={3}
               maxLength={500}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none ${
+                fieldErrors.symptoms ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
             />
+            {fieldErrors.symptoms && (
+              <p className="text-red-600 text-sm mt-1">⚠️ {fieldErrors.symptoms}</p>
+            )}
           </div>
         )}
 
@@ -462,8 +479,13 @@ export default function BookAppointmentPage() {
             placeholder={isHospitalAdmin ? "Additional appointment notes" : "Describe your symptoms or reason for visit"}
             rows={4}
             maxLength={500}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none ${
+              fieldErrors.notes ? 'border-red-500 bg-red-50' : 'border-gray-300'
+            }`}
           />
+          {fieldErrors.notes && (
+            <p className="text-red-600 text-sm mt-1">⚠️ {fieldErrors.notes}</p>
+          )}
         </div>
 
         {/* SUBMIT BUTTONS */}

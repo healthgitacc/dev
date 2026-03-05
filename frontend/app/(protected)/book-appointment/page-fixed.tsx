@@ -53,7 +53,7 @@ export default function BookAppointmentPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const doctorResponse = await apiClient.get('/api/doctors');
+        const doctorResponse = await apiClient.get('/api/doctors?limit=100');
         setDoctors(doctorResponse.data.items || []);
         
         if (isHospitalAdmin) {

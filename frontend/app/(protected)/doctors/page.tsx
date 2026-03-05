@@ -28,7 +28,7 @@ export default function DoctorsPage() {
     const fetchDoctors = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get('/api/doctors');
+        const response = await apiClient.get('/api/doctors?limit=100');
         const doctorsList = response.data.items || [];
         setDoctors(doctorsList);
         

@@ -30,10 +30,12 @@ function EditPatientModal({ patient, isOpen, onClose, onSave }: EditModalProps) 
   const [formData, setFormData] = useState<Patient | null>(patient);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
 
   useEffect(() => {
     setFormData(patient);
     setSaveError('');
+    setSaveSuccess('');
   }, [patient]);
 
   if (!isOpen || !formData) return null;
@@ -49,17 +51,23 @@ function EditPatientModal({ patient, isOpen, onClose, onSave }: EditModalProps) 
   const handleSave = async () => {
     setSaving(true);
     setSaveError('');
+    setSaveSuccess('');
     try {
-      await apiClient.put(`/api/patients/${formData.id}`, {
-        age: formData.age,
-        gender: formData.gender,
-        blood_group: formData.blood_group,
-        medical_history: formData.medical_history,
-      });
-      onSave(formData);
-      onClose();
+      const queryParams = new URLSearchParams();
+      if (formData.age) queryParams.append('age', formData.age.toString());
+      if (formData.gender) queryParams.append('gender', formData.gender);
+      if (formData.blood_group) queryParams.append('blood_group', formData.blood_group);
+      if (formData.medical_history) queryParams.append('medical_history', formData.medical_history);
+      
+      await apiClient.put(`/api/patients/${formData.id}?${queryParams.toString()}`);
+      setSaveSuccess('Patient saved successfully!');
+      setTimeout(() => {
+        onSave(formData);
+        onClose();
+      }, 1000);
     } catch (error: any) {
-      setSaveError(error.response?.data?.detail || 'Failed to save patient');
+      console.error('Save error:', error.response?.data);
+      setSaveError(error.response?.data?.detail || error.message || 'Failed to save patient');
     } finally {
       setSaving(false);
     }
@@ -82,6 +90,11 @@ function EditPatientModal({ patient, isOpen, onClose, onSave }: EditModalProps) 
           {saveError && (
             <div className="p-4 bg-red-100 text-red-700 rounded-lg">
               {saveError}
+            </div>
+          )}
+          {saveSuccess && (
+            <div className="p-4 bg-green-100 text-green-700 rounded-lg">
+              {saveSuccess}
             </div>
           )}
 

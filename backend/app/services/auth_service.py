@@ -75,7 +75,7 @@ class AuthService:
             
             # Create role-specific profile
             if data.role == UserRole.DOCTOR:
-                doctor = Doctor(user_id=user.id, specialization="", experience_years=0)
+                doctor = Doctor(user_id=user.id, name=user.name, specialization="", experience_years=0)
                 self.db.add(doctor)
             elif data.role == UserRole.PATIENT:
                 patient = Patient(user_id=user.id)

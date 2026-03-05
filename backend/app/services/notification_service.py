@@ -18,7 +18,7 @@ class NotificationService:
         self.sms_enabled = bool(settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN)
         self.email_enabled = False  # Can be extended for email
         
-        if self.sms_enabled and settings.DEBUG:
+        if self.sms_enabled:
             logger.info("SMS notifications enabled (Twilio configured)")
         else:
             logger.info("SMS notifications disabled or in mock mode")
@@ -49,7 +49,7 @@ class NotificationService:
                 appointment_datetime
             )
             
-            if self.sms_enabled and not settings.DEBUG:
+            if self.sms_enabled:
                 # Production: Send via Twilio
                 return self._send_twilio_sms(phone_number, message_body)
             else:
@@ -142,7 +142,7 @@ class NotificationService:
                 to=phone_number,
             )
             
-            logger.info(f"✅ SMS sent to {phone_number}: {message.sid}")
+            logger.info(f"[SUCCESS] SMS sent to {phone_number}: {message.sid}")
             
             return {
                 "success": True,
@@ -238,7 +238,7 @@ class NotificationService:
                 f"Confirmation details have been sent to your email."
             )
             
-            if self.sms_enabled and not settings.DEBUG:
+            if self.sms_enabled:
                 return self._send_twilio_sms(phone_number, message_body)
             else:
                 return self._mock_send_sms(phone_number, message_body)
@@ -274,7 +274,7 @@ class NotificationService:
             if appointment_datetime:
                 appointment_time = appointment_datetime.strftime("%B %d, %Y at %I:%M %p UTC")
                 message_body = (
-                    f"❌ APPOINTMENT CANCELLED\n\n"
+                    f"[CANCELLED] APPOINTMENT CANCELLED\n\n"
                     f"Dear {patient_name},\n\n"
                     f"Your appointment with Dr. {doctor_name} scheduled for {appointment_time} "
                     f"has been cancelled.\n\n"
@@ -291,7 +291,7 @@ class NotificationService:
                     f"Please contact us to reschedule."
                 )
             
-            if self.sms_enabled and not settings.DEBUG:
+            if self.sms_enabled:
                 return self._send_twilio_sms(phone_number, message_body)
             else:
                 return self._mock_send_sms(phone_number, message_body)

@@ -233,7 +233,7 @@ class AppointmentService(BaseService[Appointment]):
         return {
             "id": appointment.id,
             "doctor_id": appointment.doctor_id,
-            "doctor_name": appointment.doctor.user.name,
+            "doctor_name": appointment.doctor.name,
             "doctor_specialization": appointment.doctor.specialization,
             "patient_id": appointment.patient_id,
             "patient_name": appointment.patient.user.name,

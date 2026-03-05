@@ -376,7 +376,7 @@ async def cancel_appointment(
         sms_result = notification_service.send_cancellation_notification(
             phone_number=appointment.patient.user.phone or "",
             patient_name=appointment.patient.user.name,
-            doctor_name=appointment.doctor.user.name,
+            doctor_name=appointment.doctor.name,
             appointment_datetime=appointment.appointment_date,
         )
         
