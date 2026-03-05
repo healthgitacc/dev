@@ -240,7 +240,7 @@ class AppointmentService(BaseService[Appointment]):
             "patient_email": appointment.patient.user.email,
             "appointment_date": appointment.appointment_date,
             "duration_minutes": appointment.duration_minutes,
-            "status": appointment.status.value,
+            "status": appointment.status,
             "notes": appointment.notes,
             "reminder_sent": appointment.reminder_sent,
             "created_at": appointment.created_at,
@@ -377,6 +377,10 @@ class AppointmentService(BaseService[Appointment]):
         if not appointment:
             raise NotFoundError("Appointment", appointment_id)
         
+        # Convert string status to enum if needed
+        current_status = AppointmentStatus(appointment.status) if isinstance(appointment.status, str) else appointment.status
+        new_status_enum = AppointmentStatus(new_status) if isinstance(new_status, str) else new_status
+        
         # Define valid status transitions
         valid_transitions = {
             AppointmentStatus.SCHEDULED: [
@@ -391,13 +395,13 @@ class AppointmentService(BaseService[Appointment]):
             AppointmentStatus.RESCHEDULED: [AppointmentStatus.SCHEDULED],
         }
         
-        if new_status not in valid_transitions.get(appointment.status, []):
+        if new_status_enum not in valid_transitions.get(current_status, []):
             raise InvalidAppointmentStatusError(
-                appointment.status.value,
-                new_status.value
+                current_status.value,
+                new_status_enum.value
             )
         
-        return super().update(appointment_id, {"status": new_status})
+        return super().update(appointment_id, {"status": new_status_enum.value})
     
     def reschedule_appointment(
         self,

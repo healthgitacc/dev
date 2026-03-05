@@ -25,13 +25,16 @@ app = FastAPI(
     version=settings.API_VERSION,
 )
 
-# CORS Configuration
+# CORS Configuration - ADD BEFORE ROUTES
+logger.info(f"CORS Allowed Origins: {settings.ALLOWED_ORIGINS}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
 

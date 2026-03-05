@@ -91,6 +91,15 @@ export function LoginForm() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error('[LoginForm] Error during login:', error);
+      console.error('[LoginForm] Error details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response,
+        isAxiosError: error.isAxiosError,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      
       if (error.response?.data?.detail) {
         setServerError(
           typeof error.response.data.detail === 'string'
@@ -100,7 +109,7 @@ export function LoginForm() {
       } else if (error.message) {
         setServerError(error.message);
       } else {
-        setServerError(ERROR_MESSAGES.NETWORK_ERROR);
+        setServerError(ERROR_MESSAGES.NETWORK_ERROR + ' - ' + JSON.stringify(error));
       }
     }
   };

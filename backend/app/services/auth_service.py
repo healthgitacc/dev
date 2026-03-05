@@ -66,7 +66,7 @@ class AuthService:
                 email=data.email,
                 phone=data.phone,
                 password_hash=password_hash,
-                role=data.role.value if isinstance(data.role, UserRole) else data.role,
+                role=data.role if isinstance(data.role, str) else data.role.value,
                 is_active=True,
             )
             

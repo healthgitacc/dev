@@ -267,7 +267,7 @@ async def book_appointment(
         return {
             "id": appointment.id,
             "appointment_date": appointment.appointment_date.isoformat(),
-            "status": appointment.status.value,
+            "status": appointment.status,
             "chief_complaint": request.chief_complaint,
             "duration_minutes": appointment.duration_minutes,
             "message": "Appointment booked successfully. SMS alerts sent to patient and doctor.",
@@ -427,7 +427,7 @@ async def book_appointment_manual(
         return {
             "id": appointment.id,
             "appointment_date": appointment.appointment_date.isoformat(),
-            "status": appointment.status.value,
+            "status": appointment.status,
             "patient_id": patient.id,
             "patient_email": patient.user.email,
             "patient_name": patient.user.name,
@@ -487,8 +487,8 @@ async def list_patients(
                         "email": p.user.email,
                         "phone": p.user.phone,
                     },
-                    "blood_group": p.blood_group.value if p.blood_group else None,
-                    "gender": p.gender.value if p.gender else None,
+                    "blood_group": p.blood_group if p.blood_group else None,
+                    "gender": p.gender if p.gender else None,
                 }
                 for p in patients
             ],
@@ -739,7 +739,7 @@ async def create_appointment_by_staff(
         return {
             "id": appointment.id,
             "appointment_date": appointment.appointment_date.isoformat(),
-            "status": appointment.status.value,
+            "status": appointment.status,
             "chief_complaint": request.chief_complaint,
             "symptoms": request.symptoms,
             "duration_minutes": appointment.duration_minutes,

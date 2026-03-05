@@ -4,6 +4,8 @@ import Cookies from 'js-cookie';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const TOKEN_KEY = 'hospital_auth_token';
 
+console.log('[API Client] Initializing with API_URL:', API_URL);
+
 /**
  * Create and configure axios instance with interceptors
  */
@@ -20,18 +22,31 @@ const createApiClient = (): AxiosInstance => {
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
       const token = Cookies.get(TOKEN_KEY);
+      console.log('[API Client] Request interceptor - token exists:', !!token);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+      console.error('[API Client] Request interceptor error:', error);
+      return Promise.reject(error);
+    }
   );
 
   // Response interceptor - handle errors
   client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      console.log('[API Client] Response received:', response.status);
+      return response;
+    },
     (error: AxiosError) => {
+      console.error('[API Client] Response error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        code: error.code,
+      });
       if (error.response?.status === 401) {
         // Token expired or invalid
         Cookies.remove(TOKEN_KEY);

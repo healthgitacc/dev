@@ -93,7 +93,7 @@ async def get_user(
     """
     try:
         # Check authorization
-        if current_user.id != user_id and current_user.role.value != "admin":
+        if current_user.id != user_id and current_user.role not in ["hospital_admin", "super_admin"]:
             from app.core import AuthorizationError
             raise AuthorizationError("Can only access your own profile")
         
