@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import apiClient from '@/lib/api';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/auth-store';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface Doctor {
   id: number;
@@ -23,6 +24,8 @@ export default function BookAppointmentPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [patientLookupMessage, setPatientLookupMessage] = useState('');
+  const [patientLookupLoading, setPatientLookupLoading] = useState(false);
 
   const preSelectedDoctorId = searchParams?.get('doctor_id') || '';
   const isHospitalAdmin = user?.role === 'admin' || user?.role === 'hospital_admin' || user?.role === 'super_admin';
@@ -79,10 +82,52 @@ export default function BookAppointmentPage() {
     if (fieldErrors[name]) {
       setFieldErrors((prev) => ({ ...prev, [name]: '' }));
     }
+    if (name === 'patient_email' || name === 'patient_phone') {
+      setPatientLookupMessage('');
+    }
   };
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handlePatientLookup = async (type: 'email' | 'phone', value: string) => {
+    if (!isHospitalAdmin) return;
+    if (!value) return;
+
+    // For email lookups, require a valid email format
+    if (type === 'email' && !validateEmail(value)) {
+      return;
+    }
+
+    try {
+      setPatientLookupLoading(true);
+      setPatientLookupMessage('');
+
+      const params = type === 'email' ? { email: value } : { phone: value };
+      const response = await apiClient.get('/api/admin/patients/lookup', {
+        params,
+      });
+
+      const patient = response.data;
+      setFormData((prev) => ({
+        ...prev,
+        patient_name: patient.name || prev.patient_name,
+        patient_email: patient.email || prev.patient_email,
+        patient_phone: patient.phone || prev.patient_phone,
+      }));
+
+      setPatientLookupMessage('Existing patient found. Details loaded from records.');
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        setPatientLookupMessage('No existing patient found. A new patient record will be created.');
+      } else {
+        console.error('[BookAppointment] Patient lookup failed:', err);
+        setPatientLookupMessage('Could not fetch patient details. You can enter them manually.');
+      }
+    } finally {
+      setPatientLookupLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -214,8 +259,7 @@ export default function BookAppointmentPage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading doctors...</p>
+        <LoadingSpinner size="lg" text="Loading doctors..." />
       </div>
     );
   }
@@ -300,6 +344,7 @@ export default function BookAppointmentPage() {
                   name="patient_email"
                   value={formData.patient_email}
                   onChange={handleChange}
+                  onBlur={(e) => handlePatientLookup('email', e.target.value)}
                   placeholder="patient@example.com"
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
                     fieldErrors.patient_email ? 'border-red-500 bg-red-50' : 'border-gray-300'
@@ -322,6 +367,7 @@ export default function BookAppointmentPage() {
                   name="patient_phone"
                   value={formData.patient_phone}
                   onChange={handleChange}
+                  onBlur={(e) => handlePatientLookup('phone', e.target.value)}
                   placeholder="+1 (234) 567-8900"
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
                     fieldErrors.patient_phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
@@ -332,6 +378,22 @@ export default function BookAppointmentPage() {
                 )}
                 <p className="text-xs text-gray-500 mt-1">For SMS notifications and unique identification</p>
               </div>
+
+              {patientLookupMessage && (
+                <div className="mt-3 text-sm">
+                  <p
+                    className={`flex items-center gap-2 ${
+                      patientLookupLoading
+                        ? 'text-blue-600'
+                        : patientLookupMessage.startsWith('Existing')
+                        ? 'text-green-700'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    {patientLookupLoading ? 'Looking up patient…' : patientLookupMessage}
+                  </p>
+                </div>
+              )}
             </div>
           </>
         )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import apiClient from '@/lib/api';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface MedicalRecord {
   id: number;
@@ -257,8 +258,7 @@ Generated on: ${new Date().toLocaleString()}
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading medical records...</p>
+        <LoadingSpinner size="lg" text="Loading medical records..." />
       </div>
     );
   }

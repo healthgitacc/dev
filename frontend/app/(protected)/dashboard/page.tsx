@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { StatCard } from '@/components/cards/StatCard';
 import { useAuthStore } from '@/lib/auth-store';
 import apiClient from '@/lib/api';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface DashboardStats {
   total_patients: number;
@@ -86,10 +87,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Authenticating...</p>
-        </div>
+        <LoadingSpinner size="lg" text="Authenticating..." />
       </div>
     );
   }
@@ -97,10 +95,7 @@ export default function DashboardPage() {
   if (pageLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
+        <LoadingSpinner size="lg" text="Loading dashboard..." />
       </div>
     );
   }

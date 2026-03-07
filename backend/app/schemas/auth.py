@@ -122,6 +122,28 @@ class PatientRegisterByStaffRequest(BaseModel):
         }
 
 
+class DoctorRegisterByAdminRequest(BaseModel):
+    """Doctor registration request from admin."""
+    name: str = Field(..., min_length=2, max_length=255, description="Doctor full name")
+    email: EmailStr = Field(..., description="Doctor email address")
+    phone: str = Field(..., max_length=20, description="Doctor phone number")
+    specialization: str = Field(..., min_length=2, max_length=255, description="Medical specialization")
+    experience_years: int = Field(default=0, ge=0, le=60, description="Years of experience")
+    license_number: Optional[str] = Field(None, max_length=100, description="Medical license number")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Dr. Jane Smith",
+                "email": "dr.jane@example.com",
+                "phone": "+1234567890",
+                "specialization": "Cardiologist",
+                "experience_years": 10,
+                "license_number": "LIC-12345"
+            }
+        }
+
+
 class AppointmentCreateByStaffRequest(BaseModel):
     """Appointment creation by hospital staff on behalf of patient."""
     patient_id: int = Field(..., gt=0, description="Patient ID")

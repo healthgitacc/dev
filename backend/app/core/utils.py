@@ -139,3 +139,35 @@ def generate_error_response(code: str, message: str, details: Optional[dict] = N
         response["details"] = details
     
     return response
+
+
+def generate_temporary_password() -> str:
+    """
+    Generate a temporary password for new users.
+    
+    Returns:
+        8-character temporary password with mixed case and numbers
+    """
+    import random
+    import string
+    
+    # Generate 8-character password: 4 letters + 4 digits
+    letters = string.ascii_letters
+    digits = string.digits
+    
+    password_chars = (
+        random.choice(letters) +  # At least one letter
+        random.choice(letters) +
+        random.choice(letters) +
+        random.choice(letters) +
+        random.choice(digits) +   # At least one digit
+        random.choice(digits) +
+        random.choice(digits) +
+        random.choice(digits)
+    )
+    
+    # Shuffle the characters
+    password_list = list(password_chars)
+    random.shuffle(password_list)
+    
+    return ''.join(password_list)
