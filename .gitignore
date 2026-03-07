@@ -1,0 +1,27 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.venv/
+.idea/
+
+# OS
+.DS_Store
+.env
+
+# Database
+*.db-journal
+hospital.db
+
+# Misc
+node_modules/
+.npmrc

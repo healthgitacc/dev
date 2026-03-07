@@ -1,0 +1,41 @@
+2026-03-05 14:26:18,786 - app.main - INFO - CORS Allowed Origins: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8000']
+2026-03-05 14:26:19,752 - app.main - INFO - [STARTUP] Hospital Appointment & Medical Record Management v1.0.0
+2026-03-05 14:26:19,753 - app.main - INFO - Debug mode: False
+2026-03-05 14:26:19,754 - app.main - INFO - Database: localhost:5432/hospital_db
+2026-03-05 14:26:20,518 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-05 14:26:20,519 - app.tasks.reminder_scheduler - INFO - Appointment reminder job scheduled for 08:00 UTC daily
+2026-03-05 14:26:20,520 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-05 14:26:20,539 - app.tasks.reminder_scheduler - INFO - Cleanup job scheduled to run hourly
+2026-03-05 14:26:20,544 - apscheduler.scheduler - INFO - Added job "Send appointment reminders" to job store "default"
+2026-03-05 14:26:20,544 - apscheduler.scheduler - INFO - Added job "Cleanup old reminders" to job store "default"
+2026-03-05 14:26:20,545 - apscheduler.scheduler - INFO - Scheduler started
+2026-03-05 14:26:20,546 - app.tasks.reminder_scheduler - INFO - Background scheduler started successfully
+2026-03-05 14:26:20,547 - app.main - INFO - [OK] Background scheduler initialized
+2026-03-05 14:31:15,516 - app.main - WARNING - AppException: AUTHENTICATION_ERROR - Invalid or expired token
+2026-03-05 14:31:15,570 - app.main - WARNING - AppException: AUTHENTICATION_ERROR - Invalid or expired token
+2026-03-05 14:34:13,164 - security - INFO - User logged in: hospitaadmin@example.com
+2026-03-05 14:34:13,398 - app.routes.auth_routes - INFO - User logged in: hospitaadmin@example.com
+2026-03-05 15:00:00,093 - apscheduler.executors.default - INFO - Running job "Cleanup old reminders (trigger: cron[minute='0'], next run at: 2026-03-05 16:00:00 IST)" (scheduled at 2026-03-05 15:00:00+05:30)
+2026-03-05 15:00:00,512 - app.tasks.reminder_scheduler - INFO - Found 0 old appointments for cleanup
+2026-03-05 15:00:00,514 - apscheduler.executors.default - INFO - Job "Cleanup old reminders (trigger: cron[minute='0'], next run at: 2026-03-05 16:00:00 IST)" executed successfully
+2026-03-05 15:04:40,536 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2026-03-05 15:04:40,606 - app.tasks.reminder_scheduler - INFO - Background scheduler stopped
+2026-03-05 15:04:40,610 - app.main - INFO - [OK] Background scheduler stopped
+2026-03-05 15:04:40,612 - app.main - INFO - [SHUTDOWN] Shutting down application
+2026-03-05 15:04:58,821 - app.main - INFO - CORS Allowed Origins: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:8000']
+2026-03-05 15:04:59,799 - app.main - INFO - [STARTUP] Hospital Appointment & Medical Record Management v1.0.0
+2026-03-05 15:04:59,801 - app.main - INFO - Debug mode: False
+2026-03-05 15:04:59,801 - app.main - INFO - Database: localhost:5432/hospital_db
+2026-03-05 15:05:00,624 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-05 15:05:00,625 - app.tasks.reminder_scheduler - INFO - Appointment reminder job scheduled for 08:00 UTC daily
+2026-03-05 15:05:00,626 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-05 15:05:00,627 - app.tasks.reminder_scheduler - INFO - Cleanup job scheduled to run hourly
+2026-03-05 15:05:00,631 - apscheduler.scheduler - INFO - Added job "Send appointment reminders" to job store "default"
+2026-03-05 15:05:00,631 - apscheduler.scheduler - INFO - Added job "Cleanup old reminders" to job store "default"
+2026-03-05 15:05:00,631 - apscheduler.scheduler - INFO - Scheduler started
+2026-03-05 15:05:00,633 - app.tasks.reminder_scheduler - INFO - Background scheduler started successfully
+2026-03-05 15:05:00,634 - app.main - INFO - [OK] Background scheduler initialized
+2026-03-05 15:05:00,744 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2026-03-05 15:05:00,745 - app.tasks.reminder_scheduler - INFO - Background scheduler stopped
+2026-03-05 15:05:00,746 - app.main - INFO - [OK] Background scheduler stopped
+2026-03-05 15:05:00,746 - app.main - INFO - [SHUTDOWN] Shutting down application
