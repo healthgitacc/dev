@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import apiClient from '@/lib/api';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/auth-store';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface Appointment {
   id: number;
@@ -324,6 +325,11 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [statusFilter, setStatusFilter] = useState('All');
+  const [doctorFilter, setDoctorFilter] = useState('');
+  const [patientNameFilter, setPatientNameFilter] = useState('');
+  const [patientEmailFilter, setPatientEmailFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -350,16 +356,63 @@ export default function AppointmentsPage() {
     fetchAppointments();
   }, []);
 
-  // Filter by status
+  // Filter and sort appointments
   useEffect(() => {
-    if (statusFilter === 'All') {
-      setFilteredAppointments(appointments);
-    } else {
-      setFilteredAppointments(
-        appointments.filter((apt) => apt.status === statusFilter)
+    let filtered = appointments;
+
+    // Filter by status
+    if (statusFilter !== 'All') {
+      filtered = filtered.filter((apt) => apt.status === statusFilter);
+    }
+
+    // Filter by doctor name
+    if (doctorFilter.trim()) {
+      filtered = filtered.filter((apt) =>
+        apt.doctor_name.toLowerCase().includes(doctorFilter.toLowerCase())
       );
     }
-  }, [statusFilter, appointments]);
+
+    // Filter by patient name
+    if (patientNameFilter.trim()) {
+      filtered = filtered.filter((apt) =>
+        apt.patient_name.toLowerCase().includes(patientNameFilter.toLowerCase())
+      );
+    }
+
+    // Filter by patient email
+    if (patientEmailFilter.trim()) {
+      filtered = filtered.filter((apt) =>
+        apt.patient_email.toLowerCase().includes(patientEmailFilter.toLowerCase())
+      );
+    }
+
+    // Filter by date
+    if (dateFilter) {
+      filtered = filtered.filter((apt) => {
+        const aptDate = new Date(apt.appointment_date).toDateString();
+        const filterDate = new Date(dateFilter).toDateString();
+        return aptDate === filterDate;
+      });
+    }
+
+    // Sort appointments
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'date_asc':
+          return new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime();
+        case 'date_desc':
+          return new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime();
+        case 'doctor_name':
+          return a.doctor_name.localeCompare(b.doctor_name);
+        case 'patient_name':
+          return a.patient_name.localeCompare(b.patient_name);
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredAppointments(filtered);
+  }, [statusFilter, doctorFilter, patientNameFilter, patientEmailFilter, dateFilter, sortBy, appointments]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -392,8 +445,7 @@ export default function AppointmentsPage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading appointments...</p>
+        <LoadingSpinner size="lg" text="Loading appointments..." />
       </div>
     );
   }
@@ -415,22 +467,102 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Status Filter */}
-      <div className="mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-        <div className="flex gap-2 flex-wrap">
-          {['All', 'scheduled', 'completed', 'cancelled'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                statusFilter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+      {/* Advanced Filters */}
+      <div className="mb-6 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">🔍 Advanced Filters</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </button>
-          ))}
+              <option value="All">All Statuses</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          {/* Doctor Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Doctor</label>
+            <input
+              type="text"
+              placeholder="Search doctor name..."
+              value={doctorFilter}
+              onChange={(e) => setDoctorFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+            />
+          </div>
+
+          {/* Patient Name Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Patient Name</label>
+            <input
+              type="text"
+              placeholder="Search patient name..."
+              value={patientNameFilter}
+              onChange={(e) => setPatientNameFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+            />
+          </div>
+
+          {/* Patient Email Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Patient Email</label>
+            <input
+              type="text"
+              placeholder="Search patient email..."
+              value={patientEmailFilter}
+              onChange={(e) => setPatientEmailFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+            />
+          </div>
+
+          {/* Date Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Sort Options */}
+        <div className="mt-4 flex flex-wrap gap-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">Sort by:</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+            >
+              <option value="date_desc">Date (Newest)</option>
+              <option value="date_asc">Date (Oldest)</option>
+              <option value="doctor_name">Doctor Name</option>
+              <option value="patient_name">Patient Name</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => {
+              setStatusFilter('All');
+              setDoctorFilter('');
+              setPatientNameFilter('');
+              setPatientEmailFilter('');
+              setDateFilter('');
+              setSortBy('date_desc');
+            }}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            Clear Filters
+          </button>
         </div>
       </div>
 

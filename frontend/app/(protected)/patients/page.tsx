@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import apiClient from '@/lib/api';
 import Link from 'next/link';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface Patient {
   id: number;
@@ -249,14 +250,25 @@ export default function PatientsPage() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Fetch patients
+  // Fetch all patients (paginate through API until we have full list)
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/patients');
-      const patientsList = response.data.items || [];
-      setPatients(patientsList);
-      setFilteredPatients(patientsList);
+      const limit = 100; // API max per request
+      let allItems: Patient[] = [];
+      let skip = 0;
+      let total = 0;
+      do {
+        const response = await apiClient.get('/api/patients', {
+          params: { skip, limit },
+        });
+        const items = response.data.items || [];
+        total = response.data.total ?? 0;
+        allItems = allItems.concat(items);
+        skip += limit;
+      } while (skip < total);
+      setPatients(allItems);
+      setFilteredPatients(allItems);
       setError('');
     } catch (err) {
       setError('Failed to load patients');
@@ -307,8 +319,7 @@ export default function PatientsPage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Loading patients...</p>
+        <LoadingSpinner size="lg" text="Loading patients..." />
       </div>
     );
   }

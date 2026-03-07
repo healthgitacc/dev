@@ -251,6 +251,86 @@ class NotificationService:
                 "message_id": None,
             }
     
+    def send_patient_credentials(
+        self,
+        phone_number: str,
+        patient_name: str,
+        email: str,
+        temporary_password: str,
+    ) -> dict:
+        """
+        Send patient registration confirmation with credentials via SMS.
+
+        Args:
+            phone_number: Patient phone number
+            patient_name: Patient name
+            email: Patient email (login)
+            temporary_password: Temporary password for first login
+
+        Returns:
+            Dictionary with notification status
+        """
+        try:
+            message_body = (
+                f"Hi {patient_name},\n\n"
+                f"You have been registered at the hospital.\n\n"
+                f"Login email: {email}\n"
+                f"Temporary password: {temporary_password}\n\n"
+                f"Please change your password after first login. Contact us if you need help."
+            )
+            if self.sms_enabled:
+                return self._send_twilio_sms(phone_number, message_body)
+            return self._mock_send_sms(phone_number, message_body)
+        except Exception as e:
+            logger.error(f"Error sending patient credentials SMS: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message_id": None,
+            }
+
+    def send_doctor_welcome(
+        self,
+        phone_number: str,
+        doctor_name: str,
+        specialization: str,
+        email: str,
+        temporary_password: str,
+    ) -> dict:
+        """
+        Send doctor onboarding SMS when profile is created.
+
+        Args:
+            phone_number: Doctor phone number
+            doctor_name: Doctor name
+            specialization: Doctor specialization
+            email: Doctor login email
+            temporary_password: Temporary password for first login
+
+        Returns:
+            Dictionary with notification status
+        """
+        try:
+            hospital_name = settings.API_TITLE or "our hospital"
+            message_body = (
+                f"Hi Dr. {doctor_name},\n\n"
+                f"Your profile has been added at {hospital_name} "
+                f"as a {specialization}.\n\n"
+                f"Login email: {email}\n"
+                f"Temporary password: {temporary_password}\n\n"
+                f"Please change your password after first login."
+            )
+            if self.sms_enabled:
+                return self._send_twilio_sms(phone_number, message_body)
+            return self._mock_send_sms(phone_number, message_body)
+        except Exception as e:
+            logger.error(f"Error sending doctor welcome SMS: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message_id": None,
+            }
+
     def send_cancellation_notification(
         self,
         phone_number: str,

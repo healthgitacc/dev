@@ -149,6 +149,7 @@ from app.routes import (
     appointment_routes,
     medical_record_routes,
     staff_routes,
+    admin_doctor_routes,
 )
 
 app.include_router(auth_routes.router, prefix="/api")
@@ -158,12 +159,13 @@ app.include_router(doctor_routes.router, prefix="/api")
 app.include_router(patient_routes.router, prefix="/api")
 app.include_router(appointment_routes.router, prefix="/api")
 app.include_router(medical_record_routes.router, prefix="/api")
+app.include_router(admin_doctor_routes.router, prefix="/api")
 
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        app,
+        "app.main:app",
         host=settings.SERVER_HOST,
         port=settings.SERVER_PORT,
         reload=settings.DEBUG,

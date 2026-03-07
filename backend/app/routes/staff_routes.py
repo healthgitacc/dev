@@ -11,7 +11,7 @@ from typing import Optional
 import time
 
 from app.database import get_db
-from app.services import AuthService, PatientService, AppointmentService
+from app.services import AuthService, PatientService, AppointmentService, DoctorService
 from app.core import (
     get_current_super_admin,
     get_current_staff_or_admin,
@@ -24,6 +24,7 @@ from app.models import User, UserRole
 from app.schemas import (
     StaffRegisterRequest,
     PatientRegisterByStaffRequest,
+    DoctorRegisterByAdminRequest,
     AppointmentCreateByStaffRequest,
     AppointmentCreateByStaffManualRequest,
     TokenResponse,
@@ -155,6 +156,20 @@ async def add_patient(
         db.refresh(patient)
         
         logger.info(f"Patient added by admin: {user.email}")
+        
+        # Send confirmation SMS to patient with credentials
+        from app.services.notification_service import NotificationService
+        notification_service = NotificationService()
+        if user.phone:
+            sms_result = notification_service.send_patient_credentials(
+                phone_number=user.phone,
+                patient_name=user.name,
+                email=user.email,
+                temporary_password=temp_password,
+            )
+            logger.info(f"[SMS] Patient credentials sent to {user.phone}: {sms_result}")
+        else:
+            logger.warning("[SMS] Patient has no phone number; skipping credentials SMS")
         
         return {
             "id": patient.id,
@@ -792,7 +807,6 @@ async def list_all_patients(
                     "phone": p.user.phone,
                     "blood_group": p.blood_group,
                     "gender": p.gender,
-                    "date_of_birth": p.date_of_birth,
                 }
                 for p in patients
             ],
@@ -800,6 +814,65 @@ async def list_all_patients(
             "skip": skip,
             "limit": limit,
         }
+    except AppException as exc:
+        raise app_exception_to_http(exc)
+
+
+@router.get(
+    "/patients/lookup",
+    response_model=dict,
+    responses={
+        403: {"description": "Staff/Admin access required"},
+        404: {"description": "Patient not found"},
+    },
+)
+async def lookup_patient_by_contact(
+    email: Optional[str] = Query(None, description="Patient email"),
+    phone: Optional[str] = Query(None, description="Patient phone number"),
+    current_staff: User = Depends(get_current_staff_or_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Look up an existing patient by unique email or phone.
+
+    Used by staff while booking appointments to auto-fill patient details.
+
+    Args:
+        email: Patient email (unique)
+        phone: Patient phone number (unique)
+        current_staff: Current authenticated staff/admin user
+        db: Database session
+
+    Returns:
+        Patient information with linked user details
+    """
+    try:
+        # Require exactly one of email or phone
+        if (not email and not phone) or (email and phone):
+            raise AppException(
+                "Provide exactly one of email or phone for lookup",
+                "INVALID_LOOKUP_PARAMS",
+                400,
+            )
+
+        from app.models import Patient as PatientModel, User as UserModel, UserRole
+
+        query = db.query(PatientModel).join(UserModel).filter(
+            UserModel.role == UserRole.PATIENT
+        )
+        if email:
+            query = query.filter(UserModel.email == email)
+        else:
+            query = query.filter(UserModel.phone == phone)
+
+        patient = query.first()
+        if not patient:
+            raise AppException("Patient not found", "PATIENT_NOT_FOUND", 404)
+
+        # Reuse patient service to format response consistently
+        patient_service = PatientService(db)
+        patient_data = patient_service.get_patient_with_user(patient.id)
+        return patient_data
     except AppException as exc:
         raise app_exception_to_http(exc)
 

@@ -7,6 +7,7 @@ from app.schemas.auth import (
     ChangePasswordRequest,
     StaffRegisterRequest,
     PatientRegisterByStaffRequest,
+    DoctorRegisterByAdminRequest,
     AppointmentCreateByStaffRequest,
     AppointmentCreateByStaffManualRequest,
 )
@@ -47,6 +48,7 @@ __all__ = [
     "ChangePasswordRequest",
     "StaffRegisterRequest",
     "PatientRegisterByStaffRequest",
+    "DoctorRegisterByAdminRequest",
     "AppointmentCreateByStaffRequest",
     # User
     "UserBase",

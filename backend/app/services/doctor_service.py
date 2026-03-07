@@ -29,6 +29,50 @@ class DoctorService(BaseService[Doctor]):
         """
         super().__init__(db, Doctor)
     
+    def create(self, data: dict) -> Doctor:
+        """
+        Create a new doctor with manual ID assignment to avoid sequence conflicts.
+        
+        Args:
+            data: Doctor data
+            
+        Returns:
+            Created doctor object
+        """
+        # Get the next available ID manually to avoid sequence conflicts
+        next_id = self._get_next_available_id()
+        data['id'] = next_id
+        
+        try:
+            db_obj = self.model(**data)
+            self.db.add(db_obj)
+            self.db.commit()
+            self.db.refresh(db_obj)
+            self.logger.info(f"Created {self.model.__name__} with id {db_obj.id}")
+            return db_obj
+        except Exception as e:
+            self.db.rollback()
+            self.logger.error(f"Error creating {self.model.__name__}: {str(e)}")
+            raise
+    
+    def _get_next_available_id(self) -> int:
+        """
+        Get the next available doctor ID manually.
+        
+        Returns:
+            Next available ID
+        """
+        # Get all existing doctor IDs
+        existing_ids = self.db.query(Doctor.id).all()
+        existing_ids = [id[0] for id in existing_ids]
+        
+        # Find next available ID
+        next_id = 1
+        while next_id in existing_ids:
+            next_id += 1
+        
+        return next_id
+    
     def get_doctor_by_user_id(self, user_id: int) -> Optional[Doctor]:
         """
         Get doctor by user ID.
