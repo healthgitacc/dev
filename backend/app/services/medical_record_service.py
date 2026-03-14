@@ -223,6 +223,48 @@ class MedicalRecordService(BaseService[MedicalRecord]):
             result.append(self.get_record_with_details(record.id))
         
         return result, total
+
+    def get_all_records_filtered(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        doctor_id: Optional[int] = None,
+        patient_id: Optional[int] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+    ) -> tuple[List[dict], int]:
+        """
+        Get all medical records with optional filters (admin only).
+        
+        Args:
+            skip: Records to skip
+            limit: Records to return
+            doctor_id: Filter by doctor ID
+            patient_id: Filter by patient ID
+            date_from: Filter records created on or after this date
+            date_to: Filter records created on or before this date
+            
+        Returns:
+            Tuple of (records, total_count)
+        """
+        query = self.db.query(MedicalRecord)
+        if doctor_id is not None:
+            query = query.filter(MedicalRecord.doctor_id == doctor_id)
+        if patient_id is not None:
+            query = query.filter(MedicalRecord.patient_id == patient_id)
+        if date_from is not None:
+            query = query.filter(MedicalRecord.created_at >= date_from)
+        if date_to is not None:
+            query = query.filter(MedicalRecord.created_at <= date_to)
+        query = query.order_by(MedicalRecord.created_at.desc())
+        
+        records, total = paginate(query, skip, limit)
+        
+        result = []
+        for record in records:
+            result.append(self.get_record_with_details(record.id))
+        
+        return result, total
     
     def get_follow_up_records(
         self,

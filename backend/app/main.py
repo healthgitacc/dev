@@ -38,6 +38,19 @@ app.add_middleware(
 )
 
 
+# Custom Middleware for Super Owner Access Control
+from app.core.middleware import super_owner_access_control_middleware
+
+@app.middleware("http")
+async def super_owner_access_control(request: Request, call_next):
+    """
+    Middleware to enforce Super Owner access control.
+    
+    Blocks Super Owner from accessing patient, doctor, appointment, and medical record endpoints.
+    """
+    return await super_owner_access_control_middleware(request, call_next)
+
+
 # Exception Handlers
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
@@ -150,6 +163,7 @@ from app.routes import (
     medical_record_routes,
     staff_routes,
     admin_doctor_routes,
+    hospital_routes,
 )
 
 app.include_router(auth_routes.router, prefix="/api")
@@ -160,6 +174,7 @@ app.include_router(patient_routes.router, prefix="/api")
 app.include_router(appointment_routes.router, prefix="/api")
 app.include_router(medical_record_routes.router, prefix="/api")
 app.include_router(admin_doctor_routes.router, prefix="/api")
+app.include_router(hospital_routes.router, prefix="/api")
 
 
 if __name__ == "__main__":

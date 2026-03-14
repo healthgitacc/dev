@@ -15,12 +15,18 @@ export const ROLE_LABELS: Record<string, string> = {
   admin: 'Administrator',
   doctor: 'Doctor',
   patient: 'Patient',
+  hospital_admin: 'Hospital Admin',
+  super_admin: 'Super Admin',
+  super_owner: 'Super Owner',
 };
 
 export const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-100 text-red-800',
   doctor: 'bg-blue-100 text-blue-800',
   patient: 'bg-green-100 text-green-800',
+  hospital_admin: 'bg-purple-100 text-purple-800',
+  super_admin: 'bg-amber-100 text-amber-800',
+  super_owner: 'bg-indigo-100 text-indigo-800',
 };
 
 /**
@@ -240,6 +246,7 @@ export const SUCCESS_MESSAGES = {
   RECORD_DELETED: 'Medical record deleted successfully.',
   USER_ACTIVATED: 'User activated successfully.',
   USER_DEACTIVATED: 'User deactivated successfully.',
+  USER_REMOVED: 'User removed successfully.',
 } as const;
 
 /**

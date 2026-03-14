@@ -5,7 +5,7 @@ Handles user registration, login, and password management.
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.core.db import get_db
 from app.services import AuthService
 from app.core import get_current_user, AppException, app_exception_to_http, get_logger
 from app.schemas import (
@@ -105,7 +105,7 @@ async def login(
     except AppException as exc:
         raise app_exception_to_http(exc)
     except Exception as exc:
-        logger.error(f"Login error: {str(exc)}")
+        logger.exception("Login error: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
@@ -167,6 +167,7 @@ async def change_password(
 )
 async def get_current_user_info(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> dict:
     """
     Get current authenticated user information.
@@ -175,10 +176,17 @@ async def get_current_user_info(
     
     Args:
         current_user: Current authenticated user
+        db: Database session
         
     Returns:
-        User information (id, email, name, role, etc.)
+        User information (id, email, name, role, hospital_name, etc.)
     """
+    hospital_name = None
+    from app.models import HospitalUser
+    hu = db.query(HospitalUser).filter(HospitalUser.user_id == current_user.id).first()
+    if hu and hu.hospital:
+        hospital_name = hu.hospital.name
+
     return {
         "id": current_user.id,
         "email": current_user.email,
@@ -187,4 +195,5 @@ async def get_current_user_info(
         "role": current_user.role,
         "is_active": current_user.is_active,
         "created_at": current_user.created_at,
+        "hospital_name": hospital_name,
     }

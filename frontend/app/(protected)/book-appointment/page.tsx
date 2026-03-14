@@ -19,6 +19,7 @@ export default function BookAppointmentPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [specializationFilter, setSpecializationFilter] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -26,6 +27,11 @@ export default function BookAppointmentPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [patientLookupMessage, setPatientLookupMessage] = useState('');
   const [patientLookupLoading, setPatientLookupLoading] = useState(false);
+
+  const specializations = Array.from(new Set(doctors.map((d) => d.specialization).filter(Boolean))).sort();
+  const filteredDoctors = specializationFilter
+    ? doctors.filter((d) => d.specialization === specializationFilter)
+    : doctors;
 
   const preSelectedDoctorId = searchParams?.get('doctor_id') || '';
   const isHospitalAdmin = user?.role === 'admin' || user?.role === 'hospital_admin' || user?.role === 'super_admin';
@@ -398,6 +404,29 @@ export default function BookAppointmentPage() {
           </>
         )}
 
+        {/* FILTER BY SPECIALIZATION */}
+        {specializations.length > 0 && (
+          <div>
+            <label htmlFor="specialization_filter" className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by specialization
+            </label>
+            <select
+              id="specialization_filter"
+              value={specializationFilter}
+              onChange={(e) => {
+                setSpecializationFilter(e.target.value);
+                setFormData((prev) => ({ ...prev, doctor_id: '' }));
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="">All specializations</option>
+              {specializations.map((spec) => (
+                <option key={spec} value={spec}>{spec}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* DOCTOR SELECTION */}
         <div>
           <label htmlFor="doctor_id" className="block text-sm font-medium text-gray-700 mb-2">
@@ -414,12 +443,15 @@ export default function BookAppointmentPage() {
             }`}
           >
             <option value="">-- Select a Doctor --</option>
-            {doctors.map((doctor) => (
+            {filteredDoctors.map((doctor) => (
               <option key={doctor.id} value={doctor.id}>
                 {doctor.name} - {doctor.specialization} ({doctor.experience_years} years)
               </option>
             ))}
           </select>
+          {filteredDoctors.length === 0 && (
+            <p className="text-amber-600 text-sm mt-1">No doctors match the selected specialization.</p>
+          )}
           {fieldErrors.doctor_id && (
             <p className="text-red-600 text-sm mt-1">⚠️ {fieldErrors.doctor_id}</p>
           )}

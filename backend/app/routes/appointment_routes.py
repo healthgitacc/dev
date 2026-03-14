@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from app.database import get_db
+from app.core.db import get_db
 from app.services import AppointmentService
 from app.core import (
     get_current_user,
@@ -109,6 +109,7 @@ async def list_appointments(
     - Doctors see their appointments
     - Patients see their appointments
     - Admins see all appointments
+    - Super Owner is blocked from accessing appointment data
     
     Args:
         skip: Records to skip
@@ -122,6 +123,11 @@ async def list_appointments(
     """
     try:
         from app.models import UserRole
+        from app.core import AuthorizationError
+        
+        # Block Super Owner from accessing appointment data (privacy policy)
+        if current_user.role == UserRole.SUPER_OWNER:
+            raise AuthorizationError("Super Owner cannot access appointment data (privacy policy)")
         
         appointment_service = AppointmentService(db)
         skip, limit = validate_pagination(skip, limit)

@@ -31,9 +31,11 @@ export function Header() {
             <>
               {/* User Info */}
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">{user.name || 'User'}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {user.role === 'hospital_admin' && user.hospital_name ? user.hospital_name : (user.name || 'User')}
+                </p>
                 <p className="text-xs text-gray-500">
-                  {ROLE_LABELS[user.role] || user.role || 'Unknown'}
+                  {ROLE_LABELS[user.role] || user.role?.replace('_', ' ') || 'Unknown'}
                 </p>
               </div>
 
@@ -51,13 +53,6 @@ export function Header() {
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
                     <Link
                       href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      Profile
-                    </Link>
-                    <Link
-                      href="/change-password"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowUserMenu(false)}
                     >

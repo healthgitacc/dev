@@ -4,7 +4,7 @@ Handles CRUD operations for users with business logic.
 """
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from app.models import User, Doctor, Patient, UserRole
+from app.models import User, Doctor, Patient, UserRole, HospitalUser
 from app.services.base import BaseService
 from app.core import (
     NotFoundError,
@@ -43,38 +43,33 @@ class UserService(BaseService[User]):
         """
         return self.db.query(User).filter(User.email == email).first()
     
-    def get_active_users(self, skip: int = 0, limit: int = 10) -> tuple[List[User], int]:
+    def get_active_users(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        include_inactive: bool = False,
+    ) -> tuple[List[User], int]:
         """
-        Get all active users with pagination.
-        
-        Args:
-            skip: Records to skip
-            limit: Records to return
-            
-        Returns:
-            Tuple of (users, total_count)
+        Get users with pagination. By default only active; set include_inactive=True for all.
         """
-        query = self.db.query(User).filter(User.is_active == True)
+        query = self.db.query(User)
+        if not include_inactive:
+            query = query.filter(User.is_active == True)
         return paginate(query, skip, limit)
-    
+
     def get_users_by_role(
         self,
         role: UserRole,
         skip: int = 0,
-        limit: int = 10
+        limit: int = 10,
+        include_inactive: bool = False,
     ) -> tuple[List[User], int]:
         """
         Get users by role with pagination.
-        
-        Args:
-            role: User role
-            skip: Records to skip
-            limit: Records to return
-            
-        Returns:
-            Tuple of (users, total_count)
         """
         query = self.db.query(User).filter(User.role == role)
+        if not include_inactive:
+            query = query.filter(User.is_active == True)
         return paginate(query, skip, limit)
     
     def create_user(self, user_data: UserCreate) -> User:
@@ -176,23 +171,49 @@ class UserService(BaseService[User]):
         
         return UserDetailResponse.from_orm(user)
     
-    def search_users(self, query: str, skip: int = 0, limit: int = 10) -> tuple[List[User], int]:
+    def search_users(
+        self,
+        query: str,
+        skip: int = 0,
+        limit: int = 10,
+        include_inactive: bool = False,
+    ) -> tuple[List[User], int]:
         """
         Search users by name or email.
-        
-        Args:
-            query: Search query
-            skip: Records to skip
-            limit: Records to return
-            
-        Returns:
-            Tuple of (users, total_count)
         """
         search = f"%{query}%"
         q = self.db.query(User).filter(
             (User.name.ilike(search)) | (User.email.ilike(search))
         )
+        if not include_inactive:
+            q = q.filter(User.is_active == True)
         return paginate(q, skip, limit)
+
+    def delete_user(self, user_id: int) -> bool:
+        """
+        Delete a user by id without loading relationships (avoids hospital_users
+        lazy load when that table is missing). Deletes in order: hospital_users,
+        doctor, patient, user.
+        """
+        from sqlalchemy import delete as sql_delete
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return False
+        try:
+            self.db.execute(sql_delete(HospitalUser).where(HospitalUser.user_id == user_id))
+        except Exception:
+            self.db.rollback()
+        try:
+            self.db.query(Doctor).filter(Doctor.user_id == user_id).delete()
+            self.db.query(Patient).filter(Patient.user_id == user_id).delete()
+            self.db.query(User).filter(User.id == user_id).delete()
+            self.db.commit()
+            self.logger.info(f"Deleted User with id {user_id}")
+            return True
+        except Exception as e:
+            self.db.rollback()
+            self.logger.error(f"Error deleting User with id {user_id}: {e}")
+            raise
     
     def count_users_by_role(self) -> dict:
         """

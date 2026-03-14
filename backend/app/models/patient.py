@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 import enum
 
 
-from app.database import Base
+from app.models.base import Base
 
 
 class Gender(str, enum.Enum):

@@ -2,7 +2,7 @@
  * Application Types and Interfaces
  */
 
-export type UserRole = 'admin' | 'doctor' | 'patient' | 'hospital_admin' | 'super_admin';
+export type UserRole = 'admin' | 'doctor' | 'patient' | 'hospital_admin' | 'super_admin' | 'super_owner';
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
 export type RecordStatus = 'active' | 'archived';
 
@@ -32,6 +32,17 @@ export interface Patient extends User {
   gender?: 'male' | 'female' | 'other';
   date_of_birth?: string;
   profile_image?: string;
+}
+
+export interface Hospital {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
 }
 
 /**

@@ -16,18 +16,6 @@ from app.core.exceptions import (
     BusinessLogicError,
     app_exception_to_http,
 )
-from app.core.auth import (
-    get_current_user,
-    get_optional_user,
-    get_current_admin,
-    get_current_super_admin,
-    get_current_hospital_staff,
-    get_current_staff_or_admin,
-    get_current_doctor,
-    get_current_patient,
-    get_current_doctor_or_patient,
-    security,
-)
 from app.core.logger import get_logger, logger, audit_logger, db_logger, security_logger
 from app.core.utils import (
     PaginatedResponse,
@@ -61,6 +49,30 @@ __all__ = [
     "InvalidAppointmentStatusError",
     "BusinessLogicError",
     "app_exception_to_http",
+# Logger
+    "get_logger",
+    "logger",
+    "audit_logger",
+    "db_logger",
+    "security_logger",
+]
+
+# Auth dependencies - moved to bottom to avoid circular imports
+from app.core.auth import (
+    get_current_user,
+    get_optional_user,
+    get_current_admin,
+    get_current_doctor,
+    get_current_patient,
+    get_current_doctor_or_patient,
+    get_current_staff_or_admin,
+    get_current_super_admin,
+    get_current_super_owner,
+    get_current_hospital_admin_or_super_owner,
+    security,
+)
+
+__all__.extend([
     # Auth dependencies
     "get_current_user",
     "get_optional_user",
@@ -68,18 +80,9 @@ __all__ = [
     "get_current_doctor",
     "get_current_patient",
     "get_current_doctor_or_patient",
+    "get_current_staff_or_admin",
+    "get_current_super_admin",
+    "get_current_super_owner",
+    "get_current_hospital_admin_or_super_owner",
     "security",
-    # Logger
-    "get_logger",
-    "logger",
-    "audit_logger",
-    "db_logger",
-    "security_logger",
-    # Utils
-    "PaginatedResponse",
-    "paginate",
-    "validate_pagination",
-    "filter_model_dict",
-    "format_datetime_response",
-    "generate_error_response",
-]
+])

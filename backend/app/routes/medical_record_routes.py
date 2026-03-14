@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Optional
 
-from app.database import get_db
+from app.core.db import get_db
 from app.services import MedicalRecordService
 from app.core import (
     get_current_user,
@@ -29,6 +29,10 @@ logger = get_logger(__name__)
 async def list_medical_records(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
+    doctor_id: Optional[int] = Query(None, description="Filter by doctor ID"),
+    patient_id: Optional[int] = Query(None, description="Filter by patient ID"),
+    date_from: Optional[str] = Query(None, description="Filter records from date (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Filter records to date (YYYY-MM-DD)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
@@ -37,11 +41,16 @@ async def list_medical_records(
     
     - Patients see their own medical records
     - Doctors see records they created
-    - Admins see all records
+    - Admins see all records (optional filters: doctor_id, patient_id, date_from, date_to)
+    - Super Owner is blocked from accessing medical records
     
     Args:
         skip: Records to skip
         limit: Records to return
+        doctor_id: Filter by doctor ID (admin only)
+        patient_id: Filter by patient ID (admin only)
+        date_from: Filter from date YYYY-MM-DD (admin only)
+        date_to: Filter to date YYYY-MM-DD (admin only)
         current_user: Current authenticated user
         db: Database session
         
@@ -50,9 +59,29 @@ async def list_medical_records(
     """
     try:
         from app.models import UserRole
+        from app.core import AuthorizationError
+        
+        # Block Super Owner from accessing medical records (privacy policy)
+        if current_user.role == UserRole.SUPER_OWNER:
+            raise AuthorizationError("Super Owner cannot access medical records (privacy policy)")
         
         medical_record_service = MedicalRecordService(db)
         skip, limit = validate_pagination(skip, limit)
+        
+        # Parse date filters for admin
+        date_from_dt = None
+        date_to_dt = None
+        if date_from:
+            try:
+                date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                date_to_dt = datetime.strptime(date_to, "%Y-%m-%d")
+                date_to_dt = date_to_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+            except ValueError:
+                pass
         
         # Get records based on user role
         if current_user.role == UserRole.PATIENT:
@@ -82,8 +111,17 @@ async def list_medical_records(
                 }
             records, total = medical_record_service.get_doctor_records(doctor.id, skip, limit)
         else:
-            # Admins see all records
-            records, total = medical_record_service.get_all_records(skip, limit)
+            # Admins: use filters when any is set
+            if doctor_id is not None or patient_id is not None or date_from_dt or date_to_dt:
+                records, total = medical_record_service.get_all_records_filtered(
+                    skip, limit,
+                    doctor_id=doctor_id,
+                    patient_id=patient_id,
+                    date_from=date_from_dt,
+                    date_to=date_to_dt,
+                )
+            else:
+                records, total = medical_record_service.get_all_records(skip, limit)
         
         return {
             "total": total,

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from app.database import get_db
+from app.core.db import get_db
 from app.services import UserService, DoctorService, NotificationService
 from app.core import (
     get_current_admin,

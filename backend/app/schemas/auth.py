@@ -46,8 +46,11 @@ class TokenResponse(BaseModel):
     access_token: str = Field(..., description="JWT access token")
     token_type: str = Field(default="bearer", description="Token type")
     user_id: int = Field(..., description="User ID")
+    name: str = Field(..., description="User full name")
     email: str = Field(..., description="User email")
+    phone: Optional[str] = Field(None, description="User phone number")
     role: UserRole = Field(..., description="User role")
+    hospital_name: Optional[str] = Field(None, description="Hospital name (for hospital_admin)")
 
     class Config:
         json_schema_extra = {
@@ -55,8 +58,11 @@ class TokenResponse(BaseModel):
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "token_type": "bearer",
                 "user_id": 1,
+                "name": "John Doe",
                 "email": "john@example.com",
-                "role": "patient"
+                "phone": "+1234567890",
+                "role": "patient",
+                "hospital_name": None
             }
         }
 

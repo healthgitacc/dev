@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from app.database import get_db
+from app.core.db import get_db
 from app.services import DoctorService
 from app.core import (
     get_current_user,
@@ -30,22 +30,32 @@ logger = get_logger(__name__)
 async def list_doctors(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
     """
     List all active doctors.
     
-    Public endpoint - accessible to all authenticated users.
+    Public endpoint - accessible to all authenticated users except Super Owner.
+    Super Owner is blocked from accessing doctor data.
     
     Args:
         skip: Records to skip
         limit: Records to return
+        current_user: Current authenticated user
         db: Database session
         
     Returns:
         Paginated list of doctors with details
     """
     try:
+        from app.models import UserRole
+        from app.core import AuthorizationError
+        
+        # Block Super Owner from accessing doctor data (privacy policy)
+        if current_user.role == UserRole.SUPER_OWNER:
+            raise AuthorizationError("Super Owner cannot access doctor data (privacy policy)")
+        
         doctor_service = DoctorService(db)
         skip, limit = validate_pagination(skip, limit)
         doctors, total = doctor_service.get_all_doctors(skip, limit)

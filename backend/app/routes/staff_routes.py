@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Optional
 import time
 
-from app.database import get_db
+from app.core.db import get_db
 from app.services import AuthService, PatientService, AppointmentService, DoctorService
 from app.core import (
     get_current_super_admin,
@@ -478,7 +478,10 @@ async def list_patients(
     db: Session = Depends(get_db),
 ) -> dict:
     """
-    List all patients (Admin only).
+    List all patients in the system (Staff and Admin only).
+    
+    Useful for staff to find existing patients or view patient list.
+    Super Owner is blocked from accessing patient data.
     
     Args:
         skip: Number of results to skip
@@ -490,6 +493,13 @@ async def list_patients(
         Paginated list of patients
     """
     try:
+        from app.models import UserRole
+        from app.core import AuthorizationError
+        
+        # Block Super Owner from accessing patient data (privacy policy)
+        if current_admin.role == UserRole.SUPER_OWNER:
+            raise AuthorizationError("Super Owner cannot access patient data (privacy policy)")
+        
         patient_service = PatientService(db)
         patients, total = patient_service.get_all_patients(skip=skip, limit=limit)
         
@@ -497,13 +507,11 @@ async def list_patients(
             "items": [
                 {
                     "id": p.id,
-                    "user": {
-                        "name": p.user.name,
-                        "email": p.user.email,
-                        "phone": p.user.phone,
-                    },
-                    "blood_group": p.blood_group if p.blood_group else None,
-                    "gender": p.gender if p.gender else None,
+                    "name": p.user.name,
+                    "email": p.user.email,
+                    "phone": p.user.phone,
+                    "blood_group": p.blood_group,
+                    "gender": p.gender,
                 }
                 for p in patients
             ],

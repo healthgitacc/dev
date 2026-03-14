@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, ForeignKey, DateTime, String, Text, Inde
 from sqlalchemy.orm import relationship
 import enum
 
-from app.database import Base
+from app.models.base import Base
 
 
 class AppointmentStatus(str, enum.Enum):

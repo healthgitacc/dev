@@ -40,9 +40,18 @@ def init_db():
                 print("[HELP] Make sure PostgreSQL is running and credentials are correct in .env")
                 return False
         
-        # Import models to register them with Base
-        from app.models import Base
-        
+        # Import Base and all models so every table is registered
+        from app.models.base import Base
+        from app.models import (
+            User,
+            Doctor,
+            Patient,
+            Appointment,
+            MedicalRecord,
+            Hospital,
+            HospitalUser,
+        )
+
         print("[INFO] Creating database tables...")
         Base.metadata.create_all(bind=engine)
         print("[OK] Database tables created successfully!")

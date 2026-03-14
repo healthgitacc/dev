@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import Cookies from 'js-cookie';
 
-export type UserRole = 'admin' | 'doctor' | 'patient' | 'hospital_admin' | 'super_admin';
+export type UserRole = 'admin' | 'doctor' | 'patient' | 'hospital_admin' | 'super_admin' | 'super_owner';
 
 export interface User {
   id: number;
@@ -11,6 +11,7 @@ export interface User {
   role: UserRole;
   is_active: boolean;
   created_at: string;
+  hospital_name?: string;
 }
 
 interface AuthState {

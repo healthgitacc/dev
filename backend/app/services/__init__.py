@@ -7,6 +7,7 @@ from app.services.patient_service import PatientService
 from app.services.appointment_service import AppointmentService
 from app.services.medical_record_service import MedicalRecordService
 from app.services.notification_service import NotificationService
+from app.services.hospital_service import HospitalService
 
 __all__ = [
     "BaseService",
@@ -17,4 +18,5 @@ __all__ = [
     "AppointmentService",
     "MedicalRecordService",
     "NotificationService",
+    "HospitalService",
 ]

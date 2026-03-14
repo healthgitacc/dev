@@ -46,16 +46,17 @@ export function LoginForm() {
         throw new Error('No access token in response');
       }
 
-      // Construct user object from response fields
+      // Construct user object from response (backend returns name, email, phone, hospital_name in TokenResponse)
       const user = {
-        id: responseData.user?.id || responseData.user_id || 0,
-        name: responseData.user?.name || 'User',
-        email: responseData.user?.email || responseData.email || '',
-        phone: responseData.user?.phone || '',
-        role: responseData.user?.role || responseData.role || 'patient',
+        id: responseData.user?.id ?? responseData.user_id ?? 0,
+        name: responseData.user?.name ?? responseData.name ?? 'User',
+        email: responseData.user?.email ?? responseData.email ?? '',
+        phone: responseData.user?.phone ?? responseData.phone ?? '',
+        role: responseData.user?.role ?? responseData.role ?? 'patient',
         is_active: responseData.user?.is_active !== undefined ? responseData.user.is_active : true,
-        created_at: responseData.user?.created_at || new Date().toISOString(),
-        updated_at: responseData.user?.updated_at || new Date().toISOString(),
+        created_at: responseData.user?.created_at ?? new Date().toISOString(),
+        updated_at: responseData.user?.updated_at ?? new Date().toISOString(),
+        ...(responseData.hospital_name != null && { hospital_name: responseData.hospital_name }),
       };
 
       console.log('[LoginForm] Constructed user object:', user);

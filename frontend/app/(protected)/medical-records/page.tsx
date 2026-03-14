@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import apiClient from '@/lib/api';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { useAuthStore } from '@/lib/auth-store';
+import { API_ENDPOINTS } from '@/lib/constants';
 
 interface MedicalRecord {
   id: number;
@@ -131,39 +133,72 @@ const DUMMY_REPORTS: MedicalRecord[] = [
 ];
 
 export default function MedicalRecordsPage() {
+  const { user } = useAuthStore();
   const [records, setRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDummy, setShowDummy] = useState(false);
 
-  useEffect(() => {
-    const fetchRecords = async () => {
-      try {
-        setLoading(true);
-        const response = await apiClient.get('/api/medical-records');
-        const recordsList = response.data.items || [];
-        
-        if (recordsList.length === 0) {
-          // Show dummy data if no real records exist
-          setRecords(DUMMY_REPORTS);
-          setShowDummy(true);
-        } else {
-          setRecords(recordsList);
-          setShowDummy(false);
-        }
-        setError('');
-      } catch (err) {
-        // If error, show dummy data for demo
+  const isAdmin = user?.role === 'hospital_admin' || user?.role === 'super_admin';
+
+  const [doctors, setDoctors] = useState<{ id: number; name: string; specialization: string }[]>([]);
+  const [patients, setPatients] = useState<{ id: number; user?: { name: string }; name?: string }[]>([]);
+  const [filterDoctorId, setFilterDoctorId] = useState<string>('');
+  const [filterPatientId, setFilterPatientId] = useState<string>('');
+  const [filterDateFrom, setFilterDateFrom] = useState<string>('');
+  const [filterDateTo, setFilterDateTo] = useState<string>('');
+
+  const fetchRecords = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params: Record<string, string | number> = { skip: 0, limit: 100 };
+      if (filterDoctorId) params.doctor_id = filterDoctorId;
+      if (filterPatientId) params.patient_id = filterPatientId;
+      if (filterDateFrom) params.date_from = filterDateFrom;
+      if (filterDateTo) params.date_to = filterDateTo;
+      const response = await apiClient.get(API_ENDPOINTS.MEDICAL_RECORDS, { params });
+      const recordsList = response.data?.items ?? [];
+      if (recordsList.length === 0 && !filterDoctorId && !filterPatientId && !filterDateFrom && !filterDateTo) {
         setRecords(DUMMY_REPORTS);
         setShowDummy(true);
-        console.error(err);
-      } finally {
-        setLoading(false);
+      } else {
+        setRecords(recordsList);
+        setShowDummy(false);
+      }
+      setError('');
+    } catch (err) {
+      if (!filterDoctorId && !filterPatientId && !filterDateFrom && !filterDateTo) {
+        setRecords(DUMMY_REPORTS);
+        setShowDummy(true);
+      } else {
+        setError('Failed to load medical records.');
+      }
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterDoctorId, filterPatientId, filterDateFrom, filterDateTo]);
+
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const loadOptions = async () => {
+      try {
+        const [docRes, patRes] = await Promise.all([
+          apiClient.get(`${API_ENDPOINTS.DOCTORS}?limit=200`),
+          apiClient.get(`${API_ENDPOINTS.PATIENTS}?limit=200`),
+        ]);
+        setDoctors(docRes.data?.items ?? []);
+        setPatients(patRes.data?.items ?? []);
+      } catch {
+        // ignore
       }
     };
-
-    fetchRecords();
-  }, []);
+    loadOptions();
+  }, [isAdmin]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -277,6 +312,72 @@ Generated on: ${new Date().toLocaleString()}
       {error && (
         <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Filters</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Doctor</label>
+              <select
+                value={filterDoctorId}
+                onChange={(e) => setFilterDoctorId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              >
+                <option value="">All doctors</option>
+                {doctors.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name} – {d.specialization}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Patient</label>
+              <select
+                value={filterPatientId}
+                onChange={(e) => setFilterPatientId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              >
+                <option value="">All patients</option>
+                {patients.map((p) => (
+                  <option key={p.id} value={p.id}>{p.user?.name ?? p.name ?? `Patient ${p.id}`}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Date from</label>
+              <input
+                type="date"
+                value={filterDateFrom}
+                onChange={(e) => setFilterDateFrom(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Date to</label>
+              <input
+                type="date"
+                value={filterDateTo}
+                onChange={(e) => setFilterDateTo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterDoctorId('');
+                  setFilterPatientId('');
+                  setFilterDateFrom('');
+                  setFilterDateTo('');
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

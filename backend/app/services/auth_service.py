@@ -189,12 +189,30 @@ class AuthService:
         # Convert user.id to string for JWT 'sub' claim (must be string per JWT spec)
         access_token = TokenManager.create_access_token(data={"sub": str(user.id)})
         
+        hospital_name = None
+        try:
+            from app.models import HospitalUser
+            hu = self.db.query(HospitalUser).filter(HospitalUser.user_id == user.id).first()
+            if hu and getattr(hu, "hospital", None):
+                hospital_name = hu.hospital.name
+        except Exception as e:
+            logger.warning("Could not resolve hospital_name for login response: %s", e)
+        
+        # Ensure role is a valid UserRole for TokenResponse (DB may store string)
+        try:
+            role = user.role if isinstance(user.role, UserRole) else UserRole(user.role)
+        except (ValueError, TypeError):
+            role = UserRole.PATIENT
+        
         return TokenResponse(
             access_token=access_token,
             token_type="bearer",
             user_id=user.id,
-            email=user.email,
-            role=user.role,
+            name=(user.name or "").strip() or "User",
+            email=user.email or "",
+            phone=user.phone or "",
+            role=role,
+            hospital_name=hospital_name,
         )
     
     @staticmethod

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 
-from app.database import get_db
+from app.core.db import get_db
 from app.services import PatientService
 from app.core import (
     get_current_user,
@@ -36,6 +36,7 @@ async def list_patients(
     List all active patients.
     
     Accessible to authenticated doctors and admins.
+    Super Owner is explicitly blocked from accessing patient data.
     
     Args:
         skip: Records to skip
@@ -49,6 +50,10 @@ async def list_patients(
     try:
         from app.models import UserRole
         from app.core import AuthorizationError
+        
+        # Block Super Owner from accessing patient data (privacy policy)
+        if current_user.role == UserRole.SUPER_OWNER:
+            raise AuthorizationError("Super Owner cannot access patient data (privacy policy)")
         
         # Allow Super Admin, Hospital Admin, and Doctors to view patient list
         # Patients can only view themselves

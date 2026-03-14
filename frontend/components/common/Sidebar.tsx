@@ -10,6 +10,7 @@ type NavItem = {
   href: string;
   icon: string;
   adminOnly?: boolean;
+  superOwnerOnly?: boolean;
 };
 
 const navItems: NavItem[] = [
@@ -19,6 +20,7 @@ const navItems: NavItem[] = [
   { label: 'Doctors', href: '/doctors', icon: '👨‍⚕️' },
   { label: 'Patients', href: '/patients', icon: '👥' },
   { label: 'Users', href: '/users', icon: '👤', adminOnly: true },
+  { label: 'Hospital Management', href: '/super-owner', icon: '🏥', superOwnerOnly: true },
   { label: 'Admin Settings', href: '/admin/settings', icon: '⚙️', adminOnly: true },
 ];
 
@@ -29,9 +31,17 @@ export function Sidebar() {
 
   // Filter nav items based on role
   const filteredItems = navItems.filter((item) => {
-    // Admin-only items
+    // Super-owner-only items (e.g. Hospital Management) — visible only to super_owner
+    if (item.superOwnerOnly) {
+      return user?.role === 'super_owner';
+    }
+    // Admin-only items (Users, Admin Settings)
     if (item.adminOnly) {
-      return user?.role === 'admin' || user?.role === 'hospital_admin' || user?.role === 'super_admin';
+      return ['admin', 'hospital_admin', 'super_admin', 'super_owner'].includes(user?.role || '');
+    }
+    // Super Owner restrictions - hide medical data
+    if (['super_owner'].includes(user?.role || '')) {
+      return ['Dashboard', 'Hospital Management', 'Admin Settings'].includes(item.label);
     }
     // Doctors link - hide for doctors
     if (item.label === 'Doctors') {
@@ -39,7 +49,7 @@ export function Sidebar() {
     }
     // Patients link - show for doctors and admins
     if (item.label === 'Patients') {
-      return user?.role === 'doctor' || user?.role === 'admin' || user?.role === 'hospital_admin' || user?.role === 'super_admin';
+      return ['doctor', 'admin', 'hospital_admin', 'super_admin'].includes(user?.role || '');
     }
     return true;
   });
@@ -125,7 +135,9 @@ export function Sidebar() {
           <div className="text-xs text-gray-500 border-t border-gray-700 pt-4">
             {user && (
               <>
-                <p className="font-medium text-gray-300 mb-2">{user.name}</p>
+                <p className="font-medium text-gray-300 mb-2">
+                  {user.role === 'hospital_admin' && user.hospital_name ? user.hospital_name : user.name}
+                </p>
                 <p>{user.email}</p>
               </>
             )}

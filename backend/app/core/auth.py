@@ -16,7 +16,7 @@ from app.core.exceptions import (
     NotFoundError,
     UserNotActiveError,
 )
-from app.database import get_db
+from app.core.db import get_db
 from app.models import User, UserRole
 from app.schemas import UserDetailResponse
 
@@ -224,6 +224,48 @@ async def get_current_hospital_staff(
     """
     if current_user.role != UserRole.HOSPITAL_ADMIN:
         raise AuthorizationError("Hospital admin access required")
+    
+    return current_user
+
+
+async def get_current_super_owner(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Dependency to ensure current user is super owner.
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        Current user if super owner
+        
+    Raises:
+        AuthorizationError: If user is not super owner
+    """
+    if current_user.role != UserRole.SUPER_OWNER:
+        raise AuthorizationError("Super owner access required")
+    
+    return current_user
+
+
+async def get_current_hospital_admin_or_super_owner(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Dependency for routes accessible by both hospital admin and super owner.
+    
+    Args:
+        current_user: Current authenticated user
+        
+    Returns:
+        Current user if hospital admin or super owner
+        
+    Raises:
+        AuthorizationError: If user is not hospital admin or super owner
+    """
+    if current_user.role not in [UserRole.HOSPITAL_ADMIN, UserRole.SUPER_OWNER]:
+        raise AuthorizationError("Hospital admin or super owner access required")
     
     return current_user
 

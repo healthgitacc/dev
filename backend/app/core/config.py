@@ -41,8 +41,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
     
     # CORS Configuration
-    ALLOWED_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:8000"],
+    ALLOWED_ORIGINS: str = Field(
+        default="http://localhost:3000,http://localhost:8001,http://localhost:8002,http://localhost:8000",
         description="Comma-separated list of allowed origins"
     )
     

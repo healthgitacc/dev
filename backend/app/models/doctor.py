@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Index
 from sqlalchemy.orm import relationship
 
-from app.database import Base
+from app.models.base import Base
 
 
 class Doctor(Base):
