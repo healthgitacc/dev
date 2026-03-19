@@ -165,6 +165,7 @@ from app.routes import (
     admin_doctor_routes,
     hospital_routes,
     department_routes,
+    appointment_reminder_routes,
 )
 
 app.include_router(auth_routes.router, prefix="/api")
@@ -177,6 +178,7 @@ app.include_router(appointment_routes.router, prefix="/api")
 app.include_router(medical_record_routes.router, prefix="/api")
 app.include_router(admin_doctor_routes.router, prefix="/api")
 app.include_router(hospital_routes.router, prefix="/api")
+app.include_router(appointment_reminder_routes.router, prefix="/api")
 
 
 if __name__ == "__main__":

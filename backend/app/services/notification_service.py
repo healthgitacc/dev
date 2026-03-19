@@ -112,6 +112,35 @@ class NotificationService:
         )
         
         return results
+
+    def send_patient_response_reminder(
+        self,
+        phone_number: str,
+        patient_name: str,
+        doctor_name: str,
+        hospital_name: str,
+        appointment_datetime: datetime,
+    ) -> dict:
+        """
+        Send a polite reminder asking the patient to reply YES or NO.
+        """
+        try:
+            message_body = self._format_patient_response_reminder(
+                patient_name=patient_name,
+                doctor_name=doctor_name,
+                hospital_name=hospital_name,
+                appointment_datetime=appointment_datetime,
+            )
+            if self.sms_enabled:
+                return self._send_twilio_sms(phone_number, message_body)
+            return self._mock_send_sms(phone_number, message_body)
+        except Exception as e:
+            logger.error(f"Error sending patient response reminder: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message_id": None,
+            }
     
     def _send_twilio_sms(self, phone_number: str, message_body: str) -> dict:
         """
@@ -207,6 +236,22 @@ class NotificationService:
             f"Reminder: You have an appointment with Dr. {doctor_name} "
             f"on {appointment_time}.\n\n"
             f"Please arrive 10 minutes early. Reply STOP to unsubscribe."
+        )
+
+    @staticmethod
+    def _format_patient_response_reminder(
+        patient_name: str,
+        doctor_name: str,
+        hospital_name: str,
+        appointment_datetime: datetime,
+    ) -> str:
+        appointment_time = appointment_datetime.strftime("%B %d, %Y at %I:%M %p UTC")
+        return (
+            f"Dear {patient_name},\n\n"
+            f"This is a friendly reminder that your next appointment is on {appointment_time} "
+            f"with Dr. {doctor_name} at {hospital_name}.\n\n"
+            f"Please reply YES if you will attend, or NO if you will not be able to come.\n\n"
+            f"Thank you."
         )
     
     def send_appointment_confirmation(

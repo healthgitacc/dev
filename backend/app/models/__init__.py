@@ -7,6 +7,7 @@ from app.models.medical_record import MedicalRecord
 from app.models.hospital import Hospital, HospitalStatus
 from app.models.hospital_user import HospitalUser
 from app.models.department import Department
+from app.models.appointment_reminder import AppointmentReminder
 
 __all__ = [
     "User",
@@ -22,4 +23,5 @@ __all__ = [
     "HospitalStatus",
     "HospitalUser",
     "Department",
+    "AppointmentReminder",
 ]

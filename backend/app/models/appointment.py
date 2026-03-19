@@ -42,6 +42,7 @@ class Appointment(Base):
     # Relationships
     doctor = relationship("Doctor", back_populates="appointments")
     patient = relationship("Patient", back_populates="appointments")
+    reminder = relationship("AppointmentReminder", back_populates="appointment", uselist=False, cascade="all, delete-orphan")
 
     # Indexes for common queries
     __table_args__ = (

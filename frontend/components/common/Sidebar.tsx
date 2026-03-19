@@ -17,6 +17,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: '📊' },
   { label: 'Appointments', href: '/appointments', icon: '📅' },
+  { label: 'Patient Reminders', href: '/patient-reminders', icon: '🔔', hospitalAdminOnly: true },
   { label: 'Medical Records', href: '/medical-records', icon: '📋' },
   { label: 'Doctors', href: '/doctors', icon: '👨‍⚕️' },
   { label: 'Patients', href: '/patients', icon: '👥' },

@@ -148,6 +148,8 @@ export const API_ENDPOINTS = {
   APPOINTMENT_RESCHEDULE: (id: number) => `/api/appointments/${id}/reschedule`,
   APPOINTMENT_CANCEL: (id: number) => `/api/appointments/${id}`,
   APPOINTMENT_REMINDERS: '/api/appointments/reminders',
+  PATIENT_REMINDERS: '/api/admin/reminders',
+  SEND_PATIENT_REMINDERS: '/api/admin/reminders/send',
 
   // Medical Records
   MEDICAL_RECORDS: '/api/medical-records',
