@@ -180,162 +180,143 @@ export function UsersPageClient() {
   };
 
   const roleLabel = (role: string) => ROLE_LABELS[role] ?? role?.replace('_', ' ') ?? '—';
-  const roleColor = (role: string) => ROLE_COLORS[role] ?? 'bg-gray-100 text-gray-800';
+  const roleColor = (role: string) => ROLE_COLORS[role] ?? 'bg-slate-100 text-slate-800';
+
+  const ActionButtons = ({ u }: { u: UserRow }) => (
+    <div className="flex flex-wrap gap-2">
+      <button type="button" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+        View
+      </button>
+      {canEdit && (
+        <button type="button" className="text-slate-600 hover:text-slate-700 text-sm font-medium">
+          Edit
+        </button>
+      )}
+      {canManageDoctorPatient && isDoctorOrPatient(u.role) && (
+        <>
+          {u.is_active ? (
+            <button type="button" onClick={() => handleDeactivate(u.id)} disabled={actioningId === u.id} className="text-amber-600 hover:text-amber-700 disabled:opacity-50 text-sm font-medium">
+              {actioningId === u.id ? '…' : 'Deactivate'}
+            </button>
+          ) : (
+            <button type="button" onClick={() => handleActivate(u.id)} disabled={actioningId === u.id} className="text-emerald-600 hover:text-emerald-700 disabled:opacity-50 text-sm font-medium">
+              {actioningId === u.id ? '…' : 'Activate'}
+            </button>
+          )}
+          <button type="button" onClick={() => handleRemove(u.id)} disabled={actioningId === u.id} className="text-red-600 hover:text-red-700 disabled:opacity-50 text-sm font-medium">
+            {actioningId === u.id ? '…' : 'Remove'}
+          </button>
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Users</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Users</h1>
 
-      {/* Search and Filter - hide Add User for hospital_admin */}
-      <div className="mb-6 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex gap-4">
+      <div className="card p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-wrap">
           <input
             type="text"
-            placeholder="Search users (name, email, phone)..."
+            placeholder="Search (name, email, phone)..."
             value={searchInput}
             onChange={handleSearchChange}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+            className="input-base flex-1 min-w-0 sm:min-w-[200px]"
           />
-          <select
-            value={roleFilter}
-            onChange={handleRoleChange}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-          >
+          <select value={roleFilter} onChange={handleRoleChange} className="input-base w-full sm:w-auto sm:min-w-[160px]">
             {ROLE_OPTIONS.map((opt) => (
-              <option key={opt.value || 'all'} value={opt.value}>
-                {opt.label}
-              </option>
+              <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
             ))}
           </select>
           {canManageDoctorPatient && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeInactive}
-                onChange={(e) => setIncludeInactive(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-              />
-              <span className="text-sm text-gray-700">Include inactive (to activate)</span>
+            <label className="flex items-center gap-2 cursor-pointer shrink-0">
+              <input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} className="rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+              <span className="text-sm text-slate-600">Include inactive</span>
             </label>
           )}
-          {canEdit && (
-            <button
-              type="button"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Add User
-            </button>
-          )}
+          {canEdit && <button type="button" className="btn-primary shrink-0">Add User</button>}
         </div>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
+        <div className="rounded-xl bg-red-50 border border-red-200 p-4">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
       {successMessage && (
-        <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4">
-          <p className="text-sm text-green-700">{successMessage}</p>
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+          <p className="text-sm text-emerald-700">{successMessage}</p>
         </div>
       )}
 
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Role</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {loading ? (
+      {/* Desktop: table */}
+      <div className="card overflow-hidden hidden md:block">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px]">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                  Loading users...
-                </td>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Phone</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
               </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                  No users found.
-                </td>
-              </tr>
-            ) : (
-              users.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{u.name || '—'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{u.phone || '—'}</td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${roleColor(u.role)}`}>
-                      {roleLabel(u.role)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {u.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm space-x-2">
-                    <button type="button" className="text-blue-600 hover:text-blue-700">
-                      View
-                    </button>
-                    {canEdit && (
-                      <button type="button" className="text-gray-600 hover:text-gray-700">
-                        Edit
-                      </button>
-                    )}
-                    {canManageDoctorPatient && isDoctorOrPatient(u.role) && (
-                      <>
-                        {u.is_active ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDeactivate(u.id)}
-                            disabled={actioningId === u.id}
-                            className="text-amber-600 hover:text-amber-700 disabled:opacity-50"
-                          >
-                            {actioningId === u.id ? '…' : 'Deactivate'}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleActivate(u.id)}
-                            disabled={actioningId === u.id}
-                            className="text-green-600 hover:text-green-700 disabled:opacity-50"
-                          >
-                            {actioningId === u.id ? '…' : 'Activate'}
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(u.id)}
-                          disabled={actioningId === u.id}
-                          className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                        >
-                          {actioningId === u.id ? '…' : 'Remove'}
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">Loading users...</td></tr>
+              ) : users.length === 0 ? (
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-slate-500">No users found.</td></tr>
+              ) : (
+                users.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{u.name || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{u.email}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{u.phone || '—'}</td>
+                    <td className="px-4 py-3"><span className={`badge ${roleColor(u.role)}`}>{roleLabel(u.role)}</span></td>
+                    <td className="px-4 py-3">
+                      <span className={`badge ${u.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                        {u.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3"><ActionButtons u={u} /></td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      {!loading && total > 0 && (
-        <p className="mt-2 text-sm text-gray-500">Total: {total} user(s)</p>
-      )}
+
+      {/* Mobile: cards */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="card p-8 text-center text-slate-500">Loading users...</div>
+        ) : users.length === 0 ? (
+          <div className="card p-8 text-center text-slate-500">No users found.</div>
+        ) : (
+          users.map((u) => (
+            <div key={u.id} className="card p-4">
+              <div className="flex justify-between items-start gap-2 mb-2">
+                <p className="font-medium text-slate-900 truncate">{u.name || '—'}</p>
+                <span className={`badge shrink-0 ${roleColor(u.role)}`}>{roleLabel(u.role)}</span>
+              </div>
+              <p className="text-sm text-slate-600 truncate">{u.email}</p>
+              <p className="text-sm text-slate-500">{u.phone || '—'}</p>
+              <div className="flex items-center gap-2 mt-3">
+                <span className={`badge text-xs ${u.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                  {u.is_active ? 'Active' : 'Inactive'}
+                </span>
+                <ActionButtons u={u} />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {!loading && total > 0 && <p className="text-sm text-slate-500">Total: {total} user(s)</p>}
     </div>
   );
 }

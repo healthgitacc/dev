@@ -190,13 +190,20 @@ class AuthService:
         access_token = TokenManager.create_access_token(data={"sub": str(user.id)})
         
         hospital_name = None
+        department_id = None
+        department_name = None
         try:
-            from app.models import HospitalUser
+            from app.models import HospitalUser, Department
             hu = self.db.query(HospitalUser).filter(HospitalUser.user_id == user.id).first()
             if hu and getattr(hu, "hospital", None):
                 hospital_name = hu.hospital.name
+            if getattr(user, "department_id", None):
+                dept = self.db.query(Department).filter(Department.id == user.department_id).first()
+                if dept:
+                    department_id = dept.id
+                    department_name = dept.name
         except Exception as e:
-            logger.warning("Could not resolve hospital_name for login response: %s", e)
+            logger.warning("Could not resolve hospital/department for login response: %s", e)
         
         # Ensure role is a valid UserRole for TokenResponse (DB may store string)
         try:
@@ -212,6 +219,8 @@ class AuthService:
             email=user.email or "",
             phone=user.phone or "",
             role=role,
+            department_id=department_id,
+            department_name=department_name,
             hospital_name=hospital_name,
         )
     

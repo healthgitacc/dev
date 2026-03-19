@@ -291,6 +291,41 @@ async def get_current_staff_or_admin(
     return current_user
 
 
+async def get_current_hospital_admin_or_department_admin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Dependency for routes accessible by hospital admin or department admin.
+    """
+    if current_user.role not in [UserRole.HOSPITAL_ADMIN, UserRole.DEPARTMENT_ADMIN]:
+        raise AuthorizationError("Hospital admin or department admin access required")
+    return current_user
+
+
+def get_hospital_id_for_user(db: Session, user: User) -> Optional[int]:
+    """
+    Return hospital_id for hospital_admin (from HospitalUser), or None.
+    For department_admin, returns the hospital_id of their department.
+    Returns None if hospital_users table is missing or query fails.
+    """
+    try:
+        from app.models import HospitalUser, Department
+        if user.role == UserRole.HOSPITAL_ADMIN:
+            hu = (
+                db.query(HospitalUser)
+                .filter(HospitalUser.user_id == user.id)
+                .order_by(HospitalUser.id.asc())
+                .first()
+            )
+            return hu.hospital_id if hu else None
+        if user.role == UserRole.DEPARTMENT_ADMIN and getattr(user, "department_id", None):
+            dept = db.query(Department).filter(Department.id == user.department_id).first()
+            return dept.hospital_id if dept else None
+    except Exception:
+        return None
+    return None
+
+
 # Exception handlers for authentication errors
 def handle_invalid_token() -> HTTPException:
     """Create HTTPException for invalid token."""

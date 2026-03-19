@@ -50,6 +50,7 @@ def init_db():
             MedicalRecord,
             Hospital,
             HospitalUser,
+            Department,
         )
 
         print("[INFO] Creating database tables...")

@@ -143,10 +143,38 @@ export default function MedicalRecordsPage() {
 
   const [doctors, setDoctors] = useState<{ id: number; name: string; specialization: string }[]>([]);
   const [patients, setPatients] = useState<{ id: number; user?: { name: string }; name?: string }[]>([]);
+  const [doctorSearch, setDoctorSearch] = useState<string>('');
+  const [patientSearch, setPatientSearch] = useState<string>('');
   const [filterDoctorId, setFilterDoctorId] = useState<string>('');
   const [filterPatientId, setFilterPatientId] = useState<string>('');
   const [filterDateFrom, setFilterDateFrom] = useState<string>('');
   const [filterDateTo, setFilterDateTo] = useState<string>('');
+
+  const filteredDoctors = doctors.filter((doctor) => {
+    const search = doctorSearch.trim().toLowerCase();
+    if (!search) return true;
+    return (
+      doctor.name.toLowerCase().includes(search) ||
+      doctor.specialization.toLowerCase().includes(search)
+    );
+  });
+
+  const filteredPatients = patients.filter((patient) => {
+    const search = patientSearch.trim().toLowerCase();
+    const patientName = (patient.user?.name ?? patient.name ?? '').toLowerCase();
+    if (!search) return true;
+    return patientName.includes(search);
+  });
+
+  const displayedRecords = records.filter((record) => {
+    const doctorMatches = !doctorSearch.trim() || (record.doctor_name || record.doctor?.name || '')
+      .toLowerCase()
+      .includes(doctorSearch.trim().toLowerCase());
+    const patientMatches = !patientSearch.trim() || (record.patient_name || '')
+      .toLowerCase()
+      .includes(patientSearch.trim().toLowerCase());
+    return doctorMatches && patientMatches;
+  });
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -188,8 +216,8 @@ export default function MedicalRecordsPage() {
     const loadOptions = async () => {
       try {
         const [docRes, patRes] = await Promise.all([
-          apiClient.get(`${API_ENDPOINTS.DOCTORS}?limit=200`),
-          apiClient.get(`${API_ENDPOINTS.PATIENTS}?limit=200`),
+          apiClient.get(`${API_ENDPOINTS.DOCTORS}?limit=100`),
+          apiClient.get(`${API_ENDPOINTS.PATIENTS}?limit=100`),
         ]);
         setDoctors(docRes.data?.items ?? []);
         setPatients(patRes.data?.items ?? []);
@@ -318,7 +346,17 @@ Generated on: ${new Date().toLocaleString()}
       {isAdmin && (
         <div className="mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Filters</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Search doctor</label>
+              <input
+                type="text"
+                value={doctorSearch}
+                onChange={(e) => setDoctorSearch(e.target.value)}
+                placeholder="Doctor name or specialization"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Doctor</label>
               <select
@@ -327,10 +365,20 @@ Generated on: ${new Date().toLocaleString()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="">All doctors</option>
-                {doctors.map((d) => (
+                {filteredDoctors.map((d) => (
                   <option key={d.id} value={d.id}>{d.name} – {d.specialization}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Search patient</label>
+              <input
+                type="text"
+                value={patientSearch}
+                onChange={(e) => setPatientSearch(e.target.value)}
+                placeholder="Patient name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Patient</label>
@@ -340,7 +388,7 @@ Generated on: ${new Date().toLocaleString()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="">All patients</option>
-                {patients.map((p) => (
+                {filteredPatients.map((p) => (
                   <option key={p.id} value={p.id}>{p.user?.name ?? p.name ?? `Patient ${p.id}`}</option>
                 ))}
               </select>
@@ -367,6 +415,8 @@ Generated on: ${new Date().toLocaleString()}
               <button
                 type="button"
                 onClick={() => {
+                  setDoctorSearch('');
+                  setPatientSearch('');
                   setFilterDoctorId('');
                   setFilterPatientId('');
                   setFilterDateFrom('');
@@ -381,9 +431,9 @@ Generated on: ${new Date().toLocaleString()}
         </div>
       )}
 
-      {records.length > 0 ? (
+      {displayedRecords.length > 0 ? (
         <div className="space-y-4">
-          {records.map((record) => (
+          {displayedRecords.map((record) => (
             <div
               key={record.id}
               className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
@@ -490,10 +540,10 @@ Generated on: ${new Date().toLocaleString()}
         <div className="bg-white rounded-lg shadow-sm p-12 text-center border border-gray-200">
           <div className="text-4xl mb-4">📋</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            No medical records yet
+            No medical records found
           </h2>
           <p className="text-gray-600">
-            Your medical records from doctors will appear here after appointments and consultations.
+            Try changing the doctor, patient, or date filters.
           </p>
         </div>
       )}

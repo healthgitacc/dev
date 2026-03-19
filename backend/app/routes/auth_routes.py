@@ -182,10 +182,25 @@ async def get_current_user_info(
         User information (id, email, name, role, hospital_name, etc.)
     """
     hospital_name = None
-    from app.models import HospitalUser
-    hu = db.query(HospitalUser).filter(HospitalUser.user_id == current_user.id).first()
-    if hu and hu.hospital:
-        hospital_name = hu.hospital.name
+    department_id = None
+    department_name = None
+    try:
+        from app.models import HospitalUser, Department
+        hu = (
+            db.query(HospitalUser)
+            .filter(HospitalUser.user_id == current_user.id)
+            .order_by(HospitalUser.id.asc())
+            .first()
+        )
+        if hu and hu.hospital:
+            hospital_name = hu.hospital.name
+        if getattr(current_user, "department_id", None):
+            dept = db.query(Department).filter(Department.id == current_user.department_id).first()
+            if dept:
+                department_id = dept.id
+                department_name = dept.name
+    except Exception:
+        pass
 
     return {
         "id": current_user.id,
@@ -196,4 +211,6 @@ async def get_current_user_info(
         "is_active": current_user.is_active,
         "created_at": current_user.created_at,
         "hospital_name": hospital_name,
+        "department_id": department_id,
+        "department_name": department_name,
     }

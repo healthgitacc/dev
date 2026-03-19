@@ -7,16 +7,17 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.db import get_db
-from app.services import UserService, DoctorService, NotificationService
+from app.services import UserService, DoctorService, NotificationService, DepartmentService, HospitalService
 from app.core import (
     get_current_admin,
+    get_hospital_id_for_user,
     AppException,
     app_exception_to_http,
     get_logger,
     generate_temporary_password,
     validate_pagination,
 )
-from app.models import User, UserRole, Doctor
+from app.models import User, UserRole, Doctor, HospitalUser
 from app.schemas import UserResponse, UserCreate
 from app.schemas.admin import CreateDoctorRequest, UpdateDoctorRequest
 
@@ -59,12 +60,22 @@ async def create_doctor(
     try:
         user_service = UserService(db)
         doctor_service = DoctorService(db)
+        department_service = DepartmentService(db)
         notification_service = NotificationService()
+        hospital_service = HospitalService(db)
         
         # Validate experience years
         if request.experience_years < 0:
             from app.core import ValidationError
             raise ValidationError("Experience years cannot be negative", field="experience_years")
+
+        hospital_id = get_hospital_id_for_user(db, current_user)
+        if not hospital_id:
+            hospital_id = hospital_service.get_or_create_hospital_for_admin(current_user)
+        department = department_service.get(request.department_id)
+        if not department or department.hospital_id != hospital_id:
+            from app.core import ValidationError
+            raise ValidationError("Invalid department for your hospital", field="department_id")
         
         # Check if email already exists
         existing_user = user_service.get_user_by_email(request.email)
@@ -89,12 +100,20 @@ async def create_doctor(
         # Create doctor profile
         doctor_data = {
             "user_id": user.id,
+            "department_id": request.department_id,
             "name": request.name,
             "specialization": request.specialization,
             "experience_years": request.experience_years,
             "license_number": request.license_number,
         }
         doctor = doctor_service.create(doctor_data)
+        if hospital_id and not db.query(HospitalUser).filter(
+            HospitalUser.hospital_id == hospital_id,
+            HospitalUser.user_id == user.id,
+        ).first():
+            db.add(HospitalUser(hospital_id=hospital_id, user_id=user.id))
+            db.commit()
+            db.refresh(doctor)
         
         # Send welcome SMS to doctor
         try:

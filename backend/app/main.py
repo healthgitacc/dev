@@ -164,9 +164,11 @@ from app.routes import (
     staff_routes,
     admin_doctor_routes,
     hospital_routes,
+    department_routes,
 )
 
 app.include_router(auth_routes.router, prefix="/api")
+app.include_router(department_routes.router, prefix="/api")
 app.include_router(staff_routes.router, prefix="/api")
 app.include_router(user_routes.router, prefix="/api")
 app.include_router(doctor_routes.router, prefix="/api")

@@ -55,14 +55,16 @@ async def list_patients(
         if current_user.role == UserRole.SUPER_OWNER:
             raise AuthorizationError("Super Owner cannot access patient data (privacy policy)")
         
-        # Allow Super Admin, Hospital Admin, and Doctors to view patient list
-        # Patients can only view themselves
-        if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN, UserRole.DOCTOR]:
-            raise AuthorizationError("Super admin, hospital admin, or doctor access required to view patient details")
+        # Allow Super Admin, Hospital Admin, Department Admin, and Doctors to view patient list
+        if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.HOSPITAL_ADMIN, UserRole.DEPARTMENT_ADMIN, UserRole.DOCTOR]:
+            raise AuthorizationError("Admin or doctor access required to view patient list")
         
         patient_service = PatientService(db)
         skip, limit = validate_pagination(skip, limit)
-        patients, total = patient_service.get_all_patients(skip, limit)
+        if current_user.role == UserRole.DEPARTMENT_ADMIN and getattr(current_user, "department_id", None):
+            patients, total = patient_service.get_patients_by_department(current_user.department_id, skip, limit)
+        else:
+            patients, total = patient_service.get_all_patients(skip, limit)
         
         return {
             "total": total,

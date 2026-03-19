@@ -31,6 +31,14 @@ class AppointmentService(BaseService[Appointment]):
             db: Database session
         """
         super().__init__(db, Appointment)
+
+    def _validate_time_slot_interval(self, appointment_date: datetime, field_name: str = "appointment_date") -> None:
+        """Allow bookings only on 15-minute boundaries."""
+        if appointment_date.minute % 15 != 0 or appointment_date.second != 0 or appointment_date.microsecond != 0:
+            raise ValidationError(
+                "Appointment time must be in 15-minute intervals (00, 15, 30, 45)",
+                field=field_name,
+            )
     
     def create_appointment(
         self,
@@ -89,6 +97,7 @@ class AppointmentService(BaseService[Appointment]):
         now = datetime.now(timezone.utc)
         if appointment_date <= now:
             raise ValidationError("Appointment date must be in the future", field="appointment_date")
+        self._validate_time_slot_interval(appointment_date, "appointment_date")
         
         # Check for doctor time slot conflicts
         self._check_doctor_availability(doctor.id, appointment_date, duration_minutes)
@@ -430,6 +439,7 @@ class AppointmentService(BaseService[Appointment]):
         
         if new_date <= datetime.utcnow():
             raise ValidationError("New appointment date must be in the future", field="new_date")
+        self._validate_time_slot_interval(new_date, "new_date")
         
         duration = duration_minutes or appointment.duration_minutes
         

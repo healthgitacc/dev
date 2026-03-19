@@ -7,7 +7,7 @@ from sqlalchemy import func
 from typing import List, Optional, Tuple
 from datetime import datetime
 
-from app.models import Hospital, HospitalStatus, User, UserRole
+from app.models import Hospital, HospitalStatus, HospitalUser, User, UserRole
 from app.core import NotFoundError, ValidationError, AppException
 
 
@@ -79,6 +79,40 @@ class HospitalService:
             Hospital or None if not found
         """
         return self.db.query(Hospital).filter(Hospital.id == hospital_id).first()
+
+    def get_or_create_hospital_for_admin(self, user: User) -> Optional[int]:
+        """
+        For a hospital_admin user: return their hospital_id (from hospital_users).
+        If they have no link, create a hospital from their user record and link them,
+        so existing hospital_admin users (e.g. "XYZ Hospital" in users table) work
+        without manual migration to hospitals/hospital_users.
+        Returns None if user is not hospital_admin.
+        """
+        if user.role != UserRole.HOSPITAL_ADMIN:
+            return None
+        hu = self.db.query(HospitalUser).filter(HospitalUser.user_id == user.id).first()
+        if hu:
+            return hu.hospital_id
+        # Auto-create hospital from user and link
+        email = f"hospital-{user.id}@careflow.internal"
+        existing = self.db.query(Hospital).filter(Hospital.email == email).first()
+        if existing:
+            self.db.add(HospitalUser(hospital_id=existing.id, user_id=user.id))
+            self.db.commit()
+            return existing.id
+        hospital = Hospital(
+            name=user.name or "Hospital",
+            email=email,
+            phone=getattr(user, "phone", None),
+            address=None,
+            status=HospitalStatus.ACTIVE,
+        )
+        self.db.add(hospital)
+        self.db.flush()
+        self.db.add(HospitalUser(hospital_id=hospital.id, user_id=user.id))
+        self.db.commit()
+        self.db.refresh(hospital)
+        return hospital.id
     
     def get_all_hospitals(
         self,

@@ -18,7 +18,7 @@ from app.core import (
     get_logger,
     validate_pagination,
 )
-from app.models import User, AppointmentStatus
+from app.models import User, AppointmentStatus, Appointment, Doctor
 
 # Pydantic model for appointment creation
 class AppointmentCreate(BaseModel):
@@ -157,7 +157,20 @@ async def list_appointments(
             appointments, total = appointment_service.get_patient_appointments(
                 patient.id, skip, limit, status_filter
             )
-        else:  # Admin
+        elif current_user.role == UserRole.DEPARTMENT_ADMIN and getattr(current_user, "department_id", None):
+            from app.core import paginate
+            query = (
+                db.query(Appointment)
+                .join(Doctor, Doctor.id == Appointment.doctor_id)
+                .filter(Doctor.department_id == current_user.department_id)
+            )
+            if status_filter:
+                query = query.filter(Appointment.status == status_filter)
+            query = query.order_by(Appointment.appointment_date.desc())
+            appointment_objs, total = paginate(query, skip, limit)
+            appointments = [appointment_service.get_appointment_with_details(a.id) for a in appointment_objs]
+        else:  # Admin (hospital_admin, super_admin, etc.)
+            from app.core import paginate
             query = db.query(Appointment)
             if status_filter:
                 query = query.filter(Appointment.status == status_filter)

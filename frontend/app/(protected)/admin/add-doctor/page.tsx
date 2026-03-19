@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import apiClient from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { useRouter } from 'next/navigation';
@@ -13,14 +13,22 @@ interface DoctorFormData {
   specialization: string;
   experience_years: string;
   license_number: string;
+  department_id: string;
+}
+
+interface Department {
+  id: number;
+  name: string;
 }
 
 export default function AddDoctorPage() {
   const { user } = useAuthStore();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
   
   const [formData, setFormData] = useState<DoctorFormData>({
     name: '',
@@ -29,6 +37,7 @@ export default function AddDoctorPage() {
     specialization: '',
     experience_years: '',
     license_number: '',
+    department_id: '',
   });
 
   const specializations = [
@@ -49,6 +58,22 @@ export default function AddDoctorPage() {
     'Anesthesiology'
   ];
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await apiClient.get('/api/departments');
+        setDepartments(response.data.items || []);
+      } catch (err) {
+        console.error('Error loading departments:', err);
+        setError('Failed to load departments');
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -64,6 +89,7 @@ export default function AddDoctorPage() {
     if (!formData.phone.trim()) return 'Phone number is required';
     if (!/^\+?[0-9]{10,15}$/.test(formData.phone)) return 'Invalid phone number format';
     if (!formData.specialization) return 'Specialization is required';
+    if (!formData.department_id) return 'Department is required';
     if (!formData.experience_years) return 'Experience years is required';
     if (parseInt(formData.experience_years) < 0) return 'Experience years cannot be negative';
     if (!formData.license_number.trim()) return 'License number is required';
@@ -91,6 +117,7 @@ export default function AddDoctorPage() {
         specialization: formData.specialization,
         experience_years: parseInt(formData.experience_years),
         license_number: formData.license_number.trim(),
+        department_id: parseInt(formData.department_id),
       });
 
       setSuccess(true);
@@ -101,6 +128,7 @@ export default function AddDoctorPage() {
         specialization: '',
         experience_years: '',
         license_number: '',
+        department_id: '',
       });
       
       // Redirect to doctors page after 2 seconds
@@ -150,6 +178,11 @@ export default function AddDoctorPage() {
       )}
 
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        {!loadingDepartments && departments.length === 0 && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+            Create a department first, then add doctors to that department.
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Doctor Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -183,6 +216,28 @@ export default function AddDoctorPage() {
                 {specializations.map((spec) => (
                   <option key={spec} value={spec}>
                     {spec}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department *
+              </label>
+              <select
+                name="department_id"
+                value={formData.department_id}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                disabled={loading || loadingDepartments || departments.length === 0}
+              >
+                <option value="">
+                  {loadingDepartments ? 'Loading departments...' : departments.length ? 'Select department' : 'No departments available'}
+                </option>
+                {departments.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.name}
                   </option>
                 ))}
               </select>
@@ -261,7 +316,7 @@ export default function AddDoctorPage() {
           <div className="flex gap-4">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || loadingDepartments || departments.length === 0}
               className="flex-1 min-w-[200px] px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

@@ -13,6 +13,7 @@ class CreateDoctorRequest(BaseModel):
     specialization: str = Field(..., min_length=2, max_length=100, description="Medical specialization")
     experience_years: int = Field(..., ge=0, le=50, description="Years of experience")
     license_number: str = Field(..., min_length=3, max_length=50, description="Medical license number")
+    department_id: int = Field(..., ge=1, description="Department ID for the doctor")
     
     @validator('email')
     def validate_email(cls, v):

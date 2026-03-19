@@ -15,10 +15,12 @@ from app.services import AuthService, PatientService, AppointmentService, Doctor
 from app.core import (
     get_current_super_admin,
     get_current_staff_or_admin,
+    get_current_hospital_admin_or_department_admin,
     get_current_user,
     AppException,
     app_exception_to_http,
     get_logger,
+    AuthorizationError,
 )
 from app.models import User, UserRole
 from app.schemas import (
@@ -203,11 +205,11 @@ async def add_patient(
 )
 async def book_appointment(
     request: AppointmentCreateByStaffRequest,
-    current_admin: User = Depends(get_current_staff_or_admin),
+    current_admin: User = Depends(get_current_hospital_admin_or_department_admin),
     db: Session = Depends(get_db),
 ) -> dict:
     """
-    Book an appointment (Super Admin or Hospital Admin only).
+    Book an appointment (Hospital Admin or Department Admin). Department admin can only book with doctors in their department.
     
     Creates appointment and sends SMS notifications to patient and doctor.
     No login required for notifications.
@@ -222,7 +224,14 @@ async def book_appointment(
     """
     try:
         from app.services.notification_service import NotificationService
-        
+        from app.models import Doctor as DoctorModel
+
+        # Department admin: only allow booking with doctors in their department
+        if current_admin.role == UserRole.DEPARTMENT_ADMIN and getattr(current_admin, "department_id", None):
+            doctor = db.query(DoctorModel).filter(DoctorModel.id == request.doctor_id).first()
+            if not doctor or doctor.department_id != current_admin.department_id:
+                raise AuthorizationError("You can only book appointments with doctors in your department")
+
         # Convert to datetime
         appointment_datetime = datetime.fromisoformat(request.appointment_date.replace('Z', '+00:00'))
         
@@ -308,11 +317,11 @@ async def book_appointment(
 )
 async def book_appointment_manual(
     request: AppointmentCreateByStaffManualRequest,
-    current_admin: User = Depends(get_current_staff_or_admin),
+    current_admin: User = Depends(get_current_hospital_admin_or_department_admin),
     db: Session = Depends(get_db),
 ) -> dict:
     """
-    Book an appointment with manual patient information (Super Admin or Hospital Admin only).
+    Book an appointment with manual patient information (Hospital Admin or Department Admin). Department admin only with doctors in their department.
     
     Creates or finds patient by email, then books appointment and sends SMS.
     
@@ -340,6 +349,9 @@ async def book_appointment_manual(
         doctor = db.query(Doctor).filter(Doctor.id == request.doctor_id).first()
         if not doctor:
             raise AppException(f"Doctor with ID {request.doctor_id} not found", "DOCTOR_NOT_FOUND", 404)
+        if current_admin.role == UserRole.DEPARTMENT_ADMIN and getattr(current_admin, "department_id", None):
+            if doctor.department_id != current_admin.department_id:
+                raise AuthorizationError("You can only book appointments with doctors in your department")
         
         # Find or create patient by email
         patient_user = db.query(User).filter(
@@ -695,11 +707,11 @@ async def register_patient_by_staff(
 )
 async def create_appointment_by_staff(
     request: AppointmentCreateByStaffRequest,
-    current_staff: User = Depends(get_current_staff_or_admin),
+    current_staff: User = Depends(get_current_hospital_admin_or_department_admin),
     db: Session = Depends(get_db),
 ) -> dict:
     """
-    Create an appointment on behalf of a patient (Hospital Staff or Admin).
+    Create an appointment on behalf of a patient (Hospital Admin or Department Admin). Department admin only with doctors in their department.
     
     Staff books appointment with doctor details, disease/symptoms info.
     Both doctor and patient receive notifications.
@@ -720,6 +732,12 @@ async def create_appointment_by_staff(
     try:
         from app.schemas.appointment import AppointmentCreate
         from app.services.notification_service import NotificationService
+        from app.models import Doctor as DoctorModel
+
+        if current_staff.role == UserRole.DEPARTMENT_ADMIN and getattr(current_staff, "department_id", None):
+            doctor = db.query(DoctorModel).filter(DoctorModel.id == request.doctor_id).first()
+            if not doctor or doctor.department_id != current_staff.department_id:
+                raise AuthorizationError("You can only book appointments with doctors in your department")
         
         # Convert to datetime
         appointment_datetime = datetime.fromisoformat(request.appointment_date.replace('Z', '+00:00'))

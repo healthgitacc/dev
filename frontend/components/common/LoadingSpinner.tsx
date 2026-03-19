@@ -27,12 +27,12 @@ export default function LoadingSpinner({
     <div className={`flex flex-col items-center justify-center space-y-3 ${className}`}>
       <div className="relative">
         {/* Main spinner */}
-        <div className={`animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 ${sizeClasses[size]}`}>
+        <div className={`animate-spin rounded-full border-4 border-slate-200 border-t-primary-500 ${sizeClasses[size]}`}>
         </div>
         
         {/* Hospital cross decoration */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-blue-600 opacity-80">
+          <div className="text-primary-500 opacity-80">
             {size === 'sm' && '🏥'}
             {size === 'md' && '🏥'}
             {size === 'lg' && '🏥'}
@@ -45,7 +45,7 @@ export default function LoadingSpinner({
       </div>
       
       {text && (
-        <p className={`text-gray-600 font-medium ${textSizes[size]}`}>
+        <p className={`text-slate-600 font-medium ${textSizes[size]}`}>
           {text}
         </p>
       )}

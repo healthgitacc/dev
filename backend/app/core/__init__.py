@@ -69,6 +69,8 @@ from app.core.auth import (
     get_current_super_admin,
     get_current_super_owner,
     get_current_hospital_admin_or_super_owner,
+    get_current_hospital_admin_or_department_admin,
+    get_hospital_id_for_user,
     security,
 )
 
@@ -84,5 +86,7 @@ __all__.extend([
     "get_current_super_admin",
     "get_current_super_owner",
     "get_current_hospital_admin_or_super_owner",
+    "get_current_hospital_admin_or_department_admin",
+    "get_hospital_id_for_user",
     "security",
 ])

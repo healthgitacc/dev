@@ -9,13 +9,12 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-        <p className="mt-2 text-gray-600">
+      <div className="mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Welcome back</h2>
+        <p className="mt-1.5 text-slate-600 text-sm">
           Sign in to your account to continue
         </p>
       </div>
-
       <LoginForm />
     </div>
   );

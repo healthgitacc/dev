@@ -16,6 +16,7 @@ export const ROLE_LABELS: Record<string, string> = {
   doctor: 'Doctor',
   patient: 'Patient',
   hospital_admin: 'Hospital Admin',
+  department_admin: 'Department Admin',
   super_admin: 'Super Admin',
   super_owner: 'Super Owner',
 };
@@ -25,6 +26,7 @@ export const ROLE_COLORS: Record<string, string> = {
   doctor: 'bg-blue-100 text-blue-800',
   patient: 'bg-green-100 text-green-800',
   hospital_admin: 'bg-purple-100 text-purple-800',
+  department_admin: 'bg-teal-100 text-teal-800',
   super_admin: 'bg-amber-100 text-amber-800',
   super_owner: 'bg-indigo-100 text-indigo-800',
 };
@@ -124,6 +126,8 @@ export const API_ENDPOINTS = {
   USER_STATS: '/api/users/stats',
   USER_ACTIVATE: (id: number) => `/api/users/${id}/activate`,
   USER_DEACTIVATE: (id: number) => `/api/users/${id}/deactivate`,
+  DEPARTMENTS: '/api/departments',
+  CREATE_DEPARTMENT_ADMIN: '/api/admin/department-admins',
 
   // Doctors
   DOCTORS: '/api/doctors',

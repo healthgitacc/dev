@@ -58,7 +58,8 @@ async def list_doctors(
         
         doctor_service = DoctorService(db)
         skip, limit = validate_pagination(skip, limit)
-        doctors, total = doctor_service.get_all_doctors(skip, limit)
+        department_id = getattr(current_user, "department_id", None) if current_user.role == UserRole.DEPARTMENT_ADMIN else None
+        doctors, total = doctor_service.get_all_doctors(skip, limit, department_id=department_id)
         
         return {
             "total": total,

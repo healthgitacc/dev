@@ -15,6 +15,7 @@ class UserRole(str, enum.Enum):
     SUPER_ADMIN = "super_admin"
     SUPER_OWNER = "super_owner"
     HOSPITAL_ADMIN = "hospital_admin"
+    DEPARTMENT_ADMIN = "department_admin"
     DOCTOR = "doctor"
     PATIENT = "patient"
 
@@ -36,6 +37,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(String(50), default=UserRole.PATIENT.value, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -44,6 +47,8 @@ class User(Base):
     doctor = relationship("Doctor", back_populates="user", uselist=False, cascade="all, delete-orphan")
     patient = relationship("Patient", back_populates="user", uselist=False, cascade="all, delete-orphan")
     hospital_assignments = relationship("HospitalUser", back_populates="user", cascade="all, delete-orphan")
+    department = relationship("Department", back_populates="department_admins", foreign_keys=[department_id])
+    created_by = relationship("User", remote_side="User.id", foreign_keys=[created_by_id])
 
     # Indexes for common queries
     __table_args__ = (

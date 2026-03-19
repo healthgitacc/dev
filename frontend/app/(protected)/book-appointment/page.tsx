@@ -34,7 +34,11 @@ export default function BookAppointmentPage() {
     : doctors;
 
   const preSelectedDoctorId = searchParams?.get('doctor_id') || '';
-  const isHospitalAdmin = user?.role === 'admin' || user?.role === 'hospital_admin' || user?.role === 'super_admin';
+  const isStaffBookingUser =
+    user?.role === 'admin' ||
+    user?.role === 'hospital_admin' ||
+    user?.role === 'department_admin' ||
+    user?.role === 'super_admin';
 
   const [formData, setFormData] = useState({
     // Patient info (for admin booking)
@@ -98,7 +102,7 @@ export default function BookAppointmentPage() {
   };
 
   const handlePatientLookup = async (type: 'email' | 'phone', value: string) => {
-    if (!isHospitalAdmin) return;
+    if (!isStaffBookingUser) return;
     if (!value) return;
 
     // For email lookups, require a valid email format
@@ -151,7 +155,7 @@ export default function BookAppointmentPage() {
     if (!formData.appointment_time) errors.appointment_time = 'Time is required';
     
     // Admin validations
-    if (isHospitalAdmin) {
+    if (isStaffBookingUser) {
       if (!formData.patient_name) errors.patient_name = 'Patient name is required';
       if (!formData.patient_email) {
         errors.patient_email = 'Patient email is required';
@@ -166,7 +170,6 @@ export default function BookAppointmentPage() {
     if (formData.appointment_time && formData.appointment_time >= '17:00') {
       errors.appointment_time = 'Appointments only available between 09:00 AM - 04:59 PM';
     }
-
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setError('Please fix the errors before submitting');
@@ -179,7 +182,7 @@ export default function BookAppointmentPage() {
       let appointmentData: any;
       let endpoint: string;
 
-      if (isHospitalAdmin) {
+      if (isStaffBookingUser) {
         // Hospital admin booking - create/use patient with provided details
         appointmentData = {
           patient_name: formData.patient_name,
@@ -278,7 +281,7 @@ export default function BookAppointmentPage() {
         </Link>
         <h1 className="text-3xl font-bold text-gray-900">Book an Appointment</h1>
         <p className="mt-2 text-gray-600">
-          {isHospitalAdmin 
+          {isStaffBookingUser 
             ? 'Enter patient details and schedule a consultation with a doctor' 
             : 'Schedule a consultation with one of our doctors'}
         </p>
@@ -312,7 +315,7 @@ export default function BookAppointmentPage() {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
         {/* PATIENT DETAILS SECTION - Hospital Admin Only */}
-        {isHospitalAdmin && (
+        {isStaffBookingUser && (
           <>
             <div className="border-b-2 pb-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h2>
@@ -493,27 +496,19 @@ export default function BookAppointmentPage() {
             required
             min="09:00"
             max="16:59"
+            step={900}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
               fieldErrors.appointment_time ? 'border-red-500 bg-red-50' : 'border-gray-300'
             }`}
           />
           <p className="mt-1 text-xs text-blue-600 font-medium">⏰ Available times: 09:00 AM - 04:59 PM</p>
-          {formData.appointment_time && (
-            formData.appointment_time >= '17:00' ? (
-              <p className="text-red-600 text-sm mt-2 p-2 bg-red-50 rounded border border-red-200">
-                ❌ Invalid time! Available: 09:00 AM - 04:59 PM
-              </p>
-            ) : (
-              <p className="text-green-600 text-sm mt-2">✅ Valid time selected</p>
-            )
-          )}
           {fieldErrors.appointment_time && (
             <p className="text-red-600 text-sm mt-1">⚠️ {fieldErrors.appointment_time}</p>
           )}
         </div>
 
         {/* CHIEF COMPLAINT - Admin Only */}
-        {isHospitalAdmin && (
+        {isStaffBookingUser && (
           <div>
             <label htmlFor="chief_complaint" className="block text-sm font-medium text-gray-700 mb-2">
               Chief Complaint <span className="text-red-500">*</span>
@@ -537,7 +532,7 @@ export default function BookAppointmentPage() {
         )}
 
         {/* SYMPTOMS - Admin Only */}
-        {isHospitalAdmin && (
+        {isStaffBookingUser && (
           <div>
             <label htmlFor="symptoms" className="block text-sm font-medium text-gray-700 mb-2">
               Symptoms (Optional)
@@ -570,7 +565,7 @@ export default function BookAppointmentPage() {
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            placeholder={isHospitalAdmin ? "Additional appointment notes" : "Describe your symptoms or reason for visit"}
+            placeholder={isStaffBookingUser ? "Additional appointment notes" : "Describe your symptoms or reason for visit"}
             rows={4}
             maxLength={500}
             className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none ${

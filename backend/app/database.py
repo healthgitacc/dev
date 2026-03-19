@@ -22,4 +22,5 @@ from app.models import (  # noqa: F401, E402
     MedicalRecord,
     Hospital,
     HospitalUser,
+    Department,
 )

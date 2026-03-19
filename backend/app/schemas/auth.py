@@ -51,6 +51,8 @@ class TokenResponse(BaseModel):
     phone: Optional[str] = Field(None, description="User phone number")
     role: UserRole = Field(..., description="User role")
     hospital_name: Optional[str] = Field(None, description="Hospital name (for hospital_admin)")
+    department_id: Optional[int] = Field(None, description="Department ID (for department_admin)")
+    department_name: Optional[str] = Field(None, description="Department name (for department_admin)")
 
     class Config:
         json_schema_extra = {
@@ -172,6 +174,29 @@ class AppointmentCreateByStaffRequest(BaseModel):
                 "notes": "Patient walks with difficulty"
             }
         }
+
+
+class CreateDepartmentRequest(BaseModel):
+    """Create a department (hospital_admin only)."""
+    name: str = Field(..., min_length=1, max_length=100, description="Department name (e.g. Ortho, Neuro, Uro)")
+
+
+class CreateDepartmentAdminRequest(BaseModel):
+    """Create a department admin (hospital_admin only)."""
+    name: str = Field(..., min_length=2, max_length=255, description="Full name")
+    email: EmailStr = Field(..., description="Email address")
+    department_id: int = Field(..., gt=0, description="Department ID (e.g. Ortho, Neuro, Uro)")
+    phone: Optional[str] = Field(None, max_length=20, description="Phone number")
+
+
+class CreateDepartmentAdminResponse(BaseModel):
+    """Response after creating department admin - includes one-time temporary password."""
+    user_id: int
+    email: str
+    name: str
+    department_id: int
+    department_name: str
+    temporary_password: str = Field(..., description="One-time password; user should change on first login")
 
 
 class AppointmentCreateByStaffManualRequest(BaseModel):

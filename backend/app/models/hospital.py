@@ -37,6 +37,7 @@ class Hospital(Base):
     # Link to users only via association table (hospitals table is for super_owner only;
     # core tables users, doctors, patients, appointments, medical_records are interconnected)
     hospital_users = relationship("HospitalUser", back_populates="hospital", cascade="all, delete-orphan")
+    departments = relationship("Department", back_populates="hospital", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Hospital {self.id}: {self.name} ({self.status})>"

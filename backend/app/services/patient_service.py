@@ -4,7 +4,7 @@ Handles patient profile management and patient-related queries.
 """
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from app.models import Patient, User, Gender, BloodGroup
+from app.models import Patient, User, Gender, BloodGroup, Appointment, Doctor
 from app.services.base import BaseService
 from app.core import (
     NotFoundError,
@@ -118,21 +118,34 @@ class PatientService(BaseService[Patient]):
     def get_all_patients(self, skip: int = 0, limit: int = 10) -> tuple[List[dict], int]:
         """
         Get all active patients.
-        
-        Args:
-            skip: Records to skip
-            limit: Records to return
-            
-        Returns:
-            Tuple of (patients, total_count)
         """
         query = self.db.query(Patient).join(User).filter(User.is_active == True)
         patients, total = paginate(query, skip, limit)
-        
-        result = []
-        for patient in patients:
-            result.append(self.get_patient_with_user(patient.id))
-        
+        result = [self.get_patient_with_user(p.id) for p in patients]
+        return result, total
+
+    def get_patients_by_department(
+        self,
+        department_id: int,
+        skip: int = 0,
+        limit: int = 10,
+    ) -> tuple[List[dict], int]:
+        """
+        Get patients who have at least one appointment with a doctor in the given department.
+        """
+        subq = (
+            self.db.query(Appointment.patient_id)
+            .join(Doctor, Doctor.id == Appointment.doctor_id)
+            .filter(Doctor.department_id == department_id)
+            .distinct()
+        )
+        query = (
+            self.db.query(Patient)
+            .join(User)
+            .filter(User.is_active == True, Patient.id.in_(subq))
+        )
+        patients, total = paginate(query, skip, limit)
+        result = [self.get_patient_with_user(p.id) for p in patients]
         return result, total
     
     def update_patient_profile(

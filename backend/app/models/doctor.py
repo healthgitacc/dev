@@ -23,6 +23,7 @@ class Doctor(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
     name = Column(String(255), nullable=False, index=True)
     specialization = Column(String(255), nullable=False)
     experience_years = Column(Integer, nullable=False, default=0)
@@ -32,6 +33,7 @@ class Doctor(Base):
 
     # Relationships
     user = relationship("User", back_populates="doctor")
+    department = relationship("Department", back_populates="doctors")
     appointments = relationship("Appointment", back_populates="doctor", cascade="all, delete-orphan")
     medical_records = relationship("MedicalRecord", back_populates="doctor", cascade="all, delete-orphan")
 

@@ -9,18 +9,12 @@ export default function ProtectedLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-gray-100">
-        {/* Sidebar */}
+      <div className="flex min-h-screen bg-slate-50">
         <Sidebar />
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
-          {/* Header */}
+        <div className="flex flex-1 flex-col min-w-0">
           <Header />
-
-          {/* Page content */}
-          <main className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="flex-1 overflow-x-hidden">
+            <div className="container-app py-6 sm:py-8 pl-14 sm:pl-6 lg:pl-8 animate-in">
               {children}
             </div>
           </main>

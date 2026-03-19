@@ -102,155 +102,97 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-red-900 mb-2">Error Loading Dashboard</h2>
-          <p className="text-red-700 mb-4">{error}</p>
-          <div className="flex gap-4">
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-            >
-              Retry
-            </button>
-            <button
-              onClick={() => window.location.href = '/'}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-            >
-              Go Home
-            </button>
-          </div>
-          <p className="text-sm text-red-600 mt-4 font-mono">
-            {error.includes('timeout') && 'Tip: The backend server may be busy. Try again in a moment.'}
-            {error.includes('ECONNREFUSED') && 'Tip: Make sure the backend server is running on port 8000.'}
-          </p>
+      <div className="card p-6 border-red-200 bg-red-50/50">
+        <h2 className="text-lg font-semibold text-red-900 mb-2">Error Loading Dashboard</h2>
+        <p className="text-red-700 mb-4">{error}</p>
+        <div className="flex flex-wrap gap-3">
+          <button type="button" onClick={() => window.location.reload()} className="btn-primary bg-red-600 hover:bg-red-700 focus:ring-red-500">
+            Retry
+          </button>
+          <a href="/" className="btn-secondary">Go Home</a>
         </div>
+        <p className="text-sm text-red-600 mt-4">
+          {error.includes('timeout') && 'Tip: The backend may be busy. Try again in a moment.'}
+          {error.includes('ECONNREFUSED') && 'Tip: Start the backend server on port 8000.'}
+        </p>
       </div>
     );
   }
 
   if (!stats) {
     return (
-      <div className="p-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-yellow-900 mb-2">No Data Available</h2>
-          <p className="text-yellow-700">Dashboard statistics could not be loaded. Please try refreshing the page.</p>
-        </div>
+      <div className="card p-6 border-amber-200 bg-amber-50/50">
+        <h2 className="text-lg font-semibold text-amber-900 mb-2">No Data Available</h2>
+        <p className="text-amber-800">Dashboard statistics could not be loaded. Try refreshing the page.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-gray-600">
-          Welcome back, {user?.name}! Here's what's happening with your account today.
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+        <p className="mt-2 text-slate-600">
+          Welcome back, {user?.name}. Here&apos;s what&apos;s happening today.
         </p>
       </div>
 
-      {/* Statistics Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <StatCard
-          title="Total Patients"
-          value={stats?.total_patients || 0}
-          icon="👥"
-          description="System-wide"
-        />
-        <StatCard
-          title="Total Doctors"
-          value={stats?.total_doctors || 0}
-          icon="👨‍⚕️"
-          description="System-wide"
-        />
-        <StatCard
-          title="Total Appointments"
-          value={stats?.total_appointments || 0}
-          icon="📅"
-          description="All time"
-        />
-        <StatCard
-          title="Completed"
-          value={stats?.completed_appointments || 0}
-          icon="✓"
-          description="Appointments"
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
+        <StatCard title="Total Patients" value={stats?.total_patients ?? 0} icon="👥" description="System-wide" href="/patients" />
+        <StatCard title="Total Doctors" value={stats?.total_doctors ?? 0} icon="👨‍⚕️" description="System-wide" href="/doctors" />
+        <StatCard title="Total Appointments" value={stats?.total_appointments ?? 0} icon="📅" description="All time" href="/appointments" />
+        <StatCard title="Completed" value={stats?.completed_appointments ?? 0} icon="✓" description="Appointments" />
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">
-            Quick Actions
-          </h2>
-
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-5">Quick Actions</h2>
           <div className="space-y-3">
-            <a
-              href="/appointments"
-              className="block w-full px-4 py-3 text-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              📅 View Appointments
+            <a href="/appointments" className="btn-primary w-full flex items-center justify-center gap-2">
+              <span>📅</span> View Appointments
             </a>
-            <a
-              href="/medical-records"
-              className="block w-full px-4 py-3 text-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              📋 Medical Records
+            <a href="/medical-records" className="btn-secondary w-full flex items-center justify-center gap-2">
+              <span>📋</span> Medical Records
             </a>
-            <a
-              href="/doctors"
-              className="block w-full px-4 py-3 text-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              👨‍⚕️ Find Doctor
+            <a href="/doctors" className="btn-secondary w-full flex items-center justify-center gap-2">
+              <span>👨‍⚕️</span> Find Doctor
             </a>
-            <a
-              href="/profile"
-              className="block w-full px-4 py-3 text-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              👤 My Profile
+            <a href="/profile" className="btn-secondary w-full flex items-center justify-center gap-2">
+              <span>👤</span> My Profile
             </a>
           </div>
         </div>
-
-        {/* System Info */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            System Overview
-          </h2>
+        <div className="lg:col-span-2 card p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">System Overview</h2>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">User Role:</span>
-              <span className="font-medium text-gray-900 capitalize">{user?.role}</span>
+            <div className="flex justify-between py-2 border-b border-slate-100">
+              <span className="text-slate-500">Role</span>
+              <span className="font-medium text-slate-800 capitalize">{user?.role?.replace('_', ' ')}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Email:</span>
-              <span className="font-medium text-gray-900">{user?.email}</span>
+            <div className="flex justify-between py-2 border-b border-slate-100">
+              <span className="text-slate-500">Email</span>
+              <span className="font-medium text-slate-800 truncate max-w-[200px]">{user?.email}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Status:</span>
-              <span className="font-medium text-green-600">Active</span>
+            <div className="flex justify-between py-2">
+              <span className="text-slate-500">Status</span>
+              <span className="font-medium text-emerald-600">Active</span>
             </div>
-            <hr className="my-3" />
-            <p className="text-gray-500">Hospital Management System - v1.0</p>
           </div>
+          <p className="text-xs text-slate-400 mt-4">CareFlow v1.0</p>
         </div>
       </div>
 
-      {/* Help Section */}
-      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">
-          Welcome to Hospital Management System
-        </h3>
-        <p className="text-blue-800 mb-4">
-          Use the navigation menu to manage appointments, view medical records, and interact with healthcare professionals.
+      <div className="rounded-2xl bg-primary-50 border border-primary-100 p-6">
+        <h3 className="text-lg font-semibold text-primary-900 mb-2">Getting started</h3>
+        <p className="text-primary-800 mb-4">
+          Use the menu to manage appointments, view medical records, and connect with healthcare staff.
         </p>
-        <div className="text-sm text-blue-700 space-y-1">
-          <p>• View your appointments and upcoming schedules</p>
-          <p>• Access your medical records and history</p>
-          <p>• Find and connect with doctors</p>
-          <p>• Manage your profile and account settings</p>
-        </div>
+        <ul className="text-sm text-primary-700 space-y-1 list-disc list-inside">
+          <li>View and manage your appointments</li>
+          <li>Access medical records and history</li>
+          <li>Find and book with doctors</li>
+          <li>Update profile and password</li>
+        </ul>
       </div>
     </div>
   );

@@ -140,26 +140,22 @@ class DoctorService(BaseService[Doctor]):
         
         return result, total
     
-    def get_all_doctors(self, skip: int = 0, limit: int = 10) -> tuple[List[dict], int]:
+    def get_all_doctors(
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        department_id: Optional[int] = None,
+    ) -> tuple[List[dict], int]:
         """
-        Get all active doctors.
-        
-        Args:
-            skip: Records to skip
-            limit: Records to return
-            
-        Returns:
-            Tuple of (doctors, total_count)
+        Get all active doctors, optionally filtered by department.
         """
         query = self.db.query(Doctor).join(User).filter(User.is_active == True)
+        if department_id is not None:
+            query = query.filter(Doctor.department_id == department_id)
         doctors, total = paginate(query, skip, limit)
-        
-        result = []
-        for doctor in doctors:
-            result.append(self.get_doctor_with_user(doctor.id))
-        
+        result = [self.get_doctor_with_user(d.id) for d in doctors]
         return result, total
-    
+
     def update_doctor_profile(
         self,
         doctor_id: int,
